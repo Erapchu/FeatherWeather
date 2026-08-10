@@ -63,3 +63,12 @@ $p | Select-Object ProcessName,
 - UV / качество воздуха отдельным запросом по требованию
 - ручной Light/Dark переключатель
 
+ради производительности 
+- 0 сторонних nuget пакетов
+- никакого Microsoft.Extensions.Hosting
+- никакого DI контейнера
+- никаких MVVM
+- WebView2 это памятежратель, поэтому не используем 
+- один статический HttpClient
+- System.Text.Json + source generation
+- обычный WPF code-behind там, где он совершенно уместен
