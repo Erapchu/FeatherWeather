@@ -5,7 +5,8 @@
         Width="760" Height="610"
         MinWidth="620" MinHeight="520"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
     <Grid Margin="28">
