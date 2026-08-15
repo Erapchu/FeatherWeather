@@ -11,7 +11,10 @@ internal static class Program
             createdNew: out bool isFirstInstance);
 
         if (!isFirstInstance)
+        {
+            SingleInstanceNotifier.NotifyExistingInstance();
             return;
+        }
 
         var app = new App();
         app.InitializeComponent();

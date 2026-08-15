@@ -14,6 +14,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        SingleInstanceNotifier.RegisterWindow(this);
 
         ContentRendered += OnContentRendered;
         Closed += (_, _) => _refreshCts?.Cancel();
