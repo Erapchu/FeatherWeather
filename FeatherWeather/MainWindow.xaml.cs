@@ -15,25 +15,25 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Show cached data synchronously. It is tiny and makes repeated launches feel instant.
-        CachedWeather? cached = WeatherCache.TryLoad();
+        ContentRendered += OnContentRendered;
+        Closed += (_, _) => _refreshCts?.Cancel();
+    }
+
+    private async void OnContentRendered(object? sender, EventArgs e)
+    {
+        if (!_firstShown)
+            return;
+
+        _firstShown = false;
+
+        CachedWeather? cached = await Task.Run(WeatherCache.TryLoad);
         if (cached is not null)
         {
             CityBox.Text = cached.City;
             Render(cached.City, cached.Country, cached.Forecast, cached.SavedAt, fromCache: true);
         }
 
-        ContentRendered += OnContentRendered;
-        Closed += (_, _) => _refreshCts?.Cancel();
-    }
-
-    private void OnContentRendered(object? sender, EventArgs e)
-    {
-        if (!_firstShown)
-            return;
-
-        _firstShown = false;
-        _ = RefreshAsync(showLoadingText: false);
+        await RefreshAsync(showLoadingText: false);
     }
 
     private async void RefreshButton_OnClick(object sender, RoutedEventArgs e) =>
@@ -66,13 +66,15 @@ public partial class MainWindow : Window
             Render(place.Name, place.Country, forecast, now, fromCache: false);
             CityBox.Text = place.Name;
 
-            WeatherCache.Save(new CachedWeather
+            var cachedWeather = new CachedWeather
             {
                 City = place.Name,
                 Country = place.Country,
                 SavedAt = now,
                 Forecast = forecast
-            });
+            };
+
+            await Task.Run(() => WeatherCache.Save(cachedWeather));
         }
         catch (OperationCanceledException)
         {
