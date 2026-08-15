@@ -1,8 +1,9 @@
+using FeatherWeather.Models;
+using FeatherWeather.Services;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
-using FeatherWeather.Models;
-using FeatherWeather.Services;
+using System.Windows.Shell;
 
 namespace FeatherWeather;
 
@@ -15,6 +16,30 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         SingleInstanceNotifier.RegisterWindow(this);
+
+        WindowChrome.SetWindowChrome(
+            this,
+            new WindowChrome
+            {
+                CaptionHeight = 50,
+                CornerRadius = new CornerRadius(12),
+                GlassFrameThickness = new Thickness(-1),
+
+                ResizeBorderThickness =
+                    ResizeMode == ResizeMode.NoResize
+                        ? default
+                        : new Thickness(4),
+
+                // Именно системные кнопки DWM
+                UseAeroCaptionButtons = true,
+
+                NonClientFrameEdges =
+                    OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000)
+                        ? NonClientFrameEdges.Left |
+                          NonClientFrameEdges.Right |
+                          NonClientFrameEdges.Bottom
+                        : NonClientFrameEdges.None
+            });
 
         ContentRendered += OnContentRendered;
         Closed += (_, _) => _refreshCts?.Cancel();
