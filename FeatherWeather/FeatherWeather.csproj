@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>FeatherWeather</AssemblyName>
     <RootNamespace>FeatherWeather</RootNamespace>
+    <StartupObject>FeatherWeather.Program</StartupObject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PublishSingleFile>false</PublishSingleFile>
     <DebugType>embedded</DebugType>
