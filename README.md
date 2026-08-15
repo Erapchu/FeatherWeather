@@ -1,74 +1,103 @@
 # Feather Weather
 
-Небольшое WPF-приложение погоды, сделанное с приоритетом на быстрый запуск и низкое потребление памяти.
+Feather Weather is a small, lightweight weather app for Windows built with WPF. It is designed for fast startup and a low memory footprint without sacrificing the essentials of a desktop forecast.
 
-## Стек
+The application UI is currently in Russian.
 
-- .NET 9 / WPF
-- встроенный WPF Fluent Theme (`ThemeMode="System"`)
-- Open-Meteo Forecast + Geocoding API
+## Features
+
+- Search for weather by city name
+- Current temperature, apparent temperature, humidity, wind speed, and pressure
+- Forecast for the next 8 hours
+- 7-day forecast with daily high and low temperatures
+- Automatic light and dark themes based on the Windows setting
+- Immediate display of the last successful forecast from a local cache
+- Manual refresh with request cancellation
+- Single-instance application behavior
+
+Weather and geocoding data are provided by [Open-Meteo](https://open-meteo.com/). No API key is required.
+
+## Technology
+
+- .NET 10 and WPF
+- Built-in WPF Fluent theme (`ThemeMode="System"`)
+- Open-Meteo Forecast and Geocoding APIs
 - `System.Text.Json` source generation
-- без сторонних NuGet-пакетов
-- без DI-контейнера, Generic Host, WebView, MVVM-фреймворка и тяжёлых chart-библиотек
+- No third-party NuGet packages
+- No dependency-injection container, Generic Host, WebView, MVVM framework, or charting library
 
-## Почему должно стартовать быстро
+## Requirements
 
-1. Главное окно создаётся без сетевых вызовов.
-2. Последний прогноз читается из маленького локального JSON-кэша и сразу показывается.
-3. Сетевое обновление запускается только после первого `ContentRendered`.
-4. Один статический `HttpClient` на всё приложение.
-5. JSON-модели используют source generation вместо runtime reflection metadata.
-6. Нет фоновых таймеров. Пока приложение открыто, оно ничего не опрашивает само по себе.
-7. Нет single-file упаковки: обычный framework-dependent build даёт ОС и .NET лучший шанс переиспользовать уже загруженные shared-компоненты.
+- Windows 10 or later
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0), or Visual Studio with the **.NET desktop development** workload
+- An internet connection for retrieving fresh weather data
 
-## Запуск
+## Run locally
 
-Нужен .NET 9 SDK / Visual Studio с workload Desktop development with .NET.
+From the repository root:
 
 ```powershell
 dotnet run --project .\FeatherWeather\FeatherWeather.csproj -c Release
 ```
 
-## Публикация
+The default city is Saint Petersburg. Enter another city and press **Enter** or use the refresh button to load its forecast.
 
-Для собственного компьютера рекомендую framework-dependent Release:
+## Build
+
+```powershell
+dotnet build .\FeatherWeather.sln -c Release
+```
+
+## Publish
+
+For a framework-dependent, 64-bit Windows build:
 
 ```powershell
 dotnet publish .\FeatherWeather\FeatherWeather.csproj -c Release -r win-x64 --self-contained false
 ```
 
-Не включайте `PublishSingleFile` только ради одного EXE: это не является бесплатной оптимизацией cold start.
+The published files are written under `FeatherWeather\bin\Release\net10.0-windows\win-x64\publish\`.
 
-## Измерение памяти
+The project intentionally keeps `PublishSingleFile` disabled. A regular framework-dependent build avoids bundling the runtime and lets Windows and .NET reuse shared components, which is a better fit for the application's startup and memory goals.
 
-Сравнивайте приложения после одинакового сценария: запустить Release, дождаться загрузки прогноза, свернуть/развернуть и оставить на 20–30 секунд.
+## Cache and startup behavior
 
-PowerShell:
+The most recent successful forecast is stored at:
 
-```powershell
-$p = Get-Process FeatherWeather
-$p | Select-Object ProcessName,
-    @{N='WorkingSetMB';E={[math]::Round($_.WorkingSet64/1MB,1)}},
-    @{N='PrivateMB';E={[math]::Round($_.PrivateMemorySize64/1MB,1)}}
+```text
+%LOCALAPPDATA%\FeatherWeather\weather.json
 ```
 
-Для footprint полезнее в первую очередь смотреть `PrivateMemorySize64`, а Working Set использовать как дополнительный показатель.
+On startup, the main window is displayed first. The cached forecast is then loaded and shown when available, while a fresh request runs in the background. Cache reads and writes are best-effort, so a missing or invalid cache does not prevent the application from running.
 
-## Что можно добавить дальше без раздувания приложения
+There are no background polling timers. Weather data is requested only at startup or when the user refreshes it.
 
-- автоопределение города через Windows Location API (лучше отдельной optional-функцией)
-- системный tray icon
-- мини-режим окна
-- осадки на ближайшие часы
-- UV / качество воздуха отдельным запросом по требованию
-- ручной Light/Dark переключатель
+## Performance choices
 
-ради производительности 
-- 0 сторонних nuget пакетов
-- никакого Microsoft.Extensions.Hosting
-- никакого DI контейнера
-- никаких MVVM
-- WebView2 это памятежратель, поэтому не используем 
-- один статический HttpClient
-- System.Text.Json + source generation
-- обычный WPF code-behind там, где он совершенно уместен
+- A single static `HttpClient` is reused for all requests.
+- Network access starts only after the window has rendered.
+- JSON serialization metadata is generated at compile time.
+- Release builds enable optimization, tiered compilation, tiered PGO, and ReadyToRun publishing.
+- Straightforward WPF code-behind is used where it keeps the application smaller and simpler.
+
+## Measuring memory usage
+
+For useful comparisons, run a Release build, wait for the forecast to load, minimize and restore the window, and then leave it idle for 20–30 seconds.
+
+```powershell
+$process = Get-Process FeatherWeather
+$process | Select-Object ProcessName,
+    @{N='WorkingSetMB';E={[math]::Round($_.WorkingSet64 / 1MB, 1)}},
+    @{N='PrivateMB';E={[math]::Round($_.PrivateMemorySize64 / 1MB, 1)}}
+```
+
+`PrivateMemorySize64` is generally the more useful primary footprint measurement; treat the working set as an additional data point.
+
+## Possible future improvements
+
+- Optional city detection through the Windows Location API
+- System tray support
+- Compact window mode
+- Short-term precipitation forecast
+- On-demand UV index and air quality data
+- Manual theme selection
