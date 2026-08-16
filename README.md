@@ -4,6 +4,9 @@ Feather Weather is a small, lightweight weather app for Windows built with WPF. 
 
 The application UI is currently in Russian.
 
+## Screenshots
+![Alt text](images/app.png "App")
+
 ## Features
 
 - Search for weather by city name
