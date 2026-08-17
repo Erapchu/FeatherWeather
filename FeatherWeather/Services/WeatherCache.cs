@@ -4,7 +4,7 @@ using FeatherWeather.Models;
 
 namespace FeatherWeather.Services;
 
-internal static class WeatherCache
+internal sealed class WeatherCache
 {
     private static readonly string DirectoryPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -12,7 +12,7 @@ internal static class WeatherCache
 
     private static readonly string FilePath = Path.Combine(DirectoryPath, "weather.json");
 
-    public static CachedWeather? TryLoad()
+    public CachedWeather? TryLoad()
     {
         try
         {
@@ -28,7 +28,7 @@ internal static class WeatherCache
         }
     }
 
-    public static void Save(CachedWeather weather)
+    public void Save(CachedWeather weather)
     {
         try
         {

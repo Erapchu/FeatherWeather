@@ -6,14 +6,14 @@ using FeatherWeather.Models;
 
 namespace FeatherWeather.Services;
 
-internal static class WeatherService
+internal sealed class WeatherService : IDisposable
 {
-    private static readonly HttpClient Http = new()
+    private readonly HttpClient _http = new()
     {
         Timeout = TimeSpan.FromSeconds(8)
     };
 
-    public static async Task<(GeoResult Place, ForecastResponse Forecast)> GetWeatherAsync(
+    public async Task<(GeoResult Place, ForecastResponse Forecast)> GetWeatherAsync(
         string city,
         CancellationToken cancellationToken)
     {
@@ -22,13 +22,13 @@ internal static class WeatherService
         return (place, forecast);
     }
 
-    private static async Task<GeoResult> FindCityAsync(string city, CancellationToken cancellationToken)
+    private async Task<GeoResult> FindCityAsync(string city, CancellationToken cancellationToken)
     {
         string url = "https://geocoding-api.open-meteo.com/v1/search?name=" +
                      Uri.EscapeDataString(city) +
                      "&count=1&language=ru&format=json";
 
-        await using Stream stream = await Http.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
+        await using Stream stream = await _http.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
         GeocodingResponse? response = await JsonSerializer.DeserializeAsync(
             stream,
             WeatherJsonContext.Default.GeocodingResponse,
@@ -38,7 +38,7 @@ internal static class WeatherService
                ?? throw new InvalidOperationException("Город не найден.");
     }
 
-    private static async Task<ForecastResponse> GetForecastAsync(GeoResult place, CancellationToken cancellationToken)
+    private async Task<ForecastResponse> GetForecastAsync(GeoResult place, CancellationToken cancellationToken)
     {
         string lat = place.Latitude.ToString(CultureInfo.InvariantCulture);
         string lon = place.Longitude.ToString(CultureInfo.InvariantCulture);
@@ -49,11 +49,13 @@ internal static class WeatherService
                      "&daily=weather_code,temperature_2m_max,temperature_2m_min" +
                      "&forecast_days=7&timezone=auto";
 
-        await using Stream stream = await Http.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
+        await using Stream stream = await _http.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
         return await JsonSerializer.DeserializeAsync(
                    stream,
                    WeatherJsonContext.Default.ForecastResponse,
                    cancellationToken).ConfigureAwait(false)
                ?? throw new InvalidOperationException("Сервис погоды вернул пустой ответ.");
     }
+
+    public void Dispose() => _http.Dispose();
 }
