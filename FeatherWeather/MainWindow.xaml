@@ -73,7 +73,17 @@
                             <TextBox x:Name="CityBox" Grid.Column="1" Height="36" VerticalContentAlignment="Center"
                              Text="Санкт-Петербург" ToolTip="Введите город"
                              KeyDown="CityBox_OnKeyDown" />
-                            <Button Grid.Column="3" Height="36" Padding="18,0" Content="Обновить" Click="RefreshButton_OnClick" />
+                            <Button 
+                                Grid.Column="3"
+                                Width="42"
+                                Height="36"
+                                ToolTip="Обновить погоду"
+                                Click="RefreshButton_OnClick">
+                                <TextBlock
+                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                    FontSize="16"
+                                    Text="&#xE72C;" />
+                            </Button>
                         </Grid>
 
                         <Grid Grid.Row="2">
