@@ -12,6 +12,7 @@
     <PublishSingleFile>false</PublishSingleFile>
     <DebugType>embedded</DebugType>
     <InvariantGlobalization>false</InvariantGlobalization>
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

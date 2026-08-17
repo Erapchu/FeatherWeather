@@ -10,6 +10,7 @@ namespace FeatherWeather;
 public partial class MainWindow : Window
 {
     private CancellationTokenSource? _refreshCts;
+    private SettingsView? _settingsView;
     private bool _firstShown = true;
 
     public MainWindow()
@@ -69,6 +70,21 @@ public partial class MainWindow : Window
     {
         if (e.Key == Key.Enter)
             await RefreshAsync(showLoadingText: true);
+    }
+
+    private void SettingsButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        _settingsView ??= new SettingsView();
+
+        SecondaryContent.Content = _settingsView;
+        SecondaryContent.Visibility = Visibility.Visible;
+        WeatherContent.Visibility = Visibility.Collapsed;
+    }
+
+    private void WeatherButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        SecondaryContent.Visibility = Visibility.Collapsed;
+        WeatherContent.Visibility = Visibility.Visible;
     }
 
     private async Task RefreshAsync(bool showLoadingText)

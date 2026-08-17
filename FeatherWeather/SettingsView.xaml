@@ -1,0 +1,46 @@
+<UserControl
+    x:Class="FeatherWeather.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="28">
+        <StackPanel>
+            <TextBlock
+                FontSize="24"
+                FontWeight="SemiBold"
+                Text="Настройки" />
+
+            <Border
+                Margin="0,24,0,0"
+                Style="{StaticResource MetricCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Text="Тема приложения" />
+                        <TextBlock
+                            Margin="0,4,20,0"
+                            Opacity="0.68"
+                            Text="Выберите оформление или следуйте настройкам Windows." />
+                    </StackPanel>
+
+                    <ComboBox
+                        x:Name="ThemeSelector"
+                        Grid.Column="1"
+                        MinWidth="150"
+                        VerticalAlignment="Center"
+                        SelectionChanged="ThemeSelector_OnSelectionChanged">
+                        <ComboBoxItem Tag="System">Системная</ComboBoxItem>
+                        <ComboBoxItem Tag="Light">Светлая</ComboBoxItem>
+                        <ComboBoxItem Tag="Dark">Тёмная</ComboBoxItem>
+                    </ComboBox>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -20,122 +20,158 @@
             </StackPanel>
         </Grid>
 
-        <ScrollViewer Grid.Row="1">
-            <Grid Margin="28">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="24" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="18" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="18" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="62" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="260" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+            <Border
+                Grid.Column="0"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,1,0">
+                <Grid>
+                    <Button
+                        Width="44"
+                        Height="44"
+                        Margin="8"
+                        VerticalAlignment="Top"
+                        Click="WeatherButton_OnClick"
+                        ToolTip="Погода">
+                        <TextBlock
+                            FontFamily="Segoe UI Symbol"
+                            FontSize="20"
+                            Text="☀" />
+                    </Button>
 
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock x:Name="CityText" Text="Погода" FontSize="24" FontWeight="SemiBold" />
-                        <TextBlock x:Name="UpdatedText" Text="Загрузка…" Margin="0,4,0,0" Opacity="0.68" />
-                    </StackPanel>
-
-                    <TextBox x:Name="CityBox" Grid.Column="1" Height="36" VerticalContentAlignment="Center"
-                     Text="Санкт-Петербург" ToolTip="Введите город"
-                     KeyDown="CityBox_OnKeyDown" />
-                    <Button Grid.Column="3" Height="36" Padding="18,0" Content="Обновить" Click="RefreshButton_OnClick" />
+                    <Button
+                        Width="44"
+                        Height="44"
+                        Margin="8"
+                        VerticalAlignment="Bottom"
+                        Click="SettingsButton_OnClick"
+                        ToolTip="Настройки">
+                        <TextBlock
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="18"
+                            Text="&#xE713;" />
+                    </Button>
                 </Grid>
+            </Border>
 
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="28" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+            <Grid x:Name="WeatherContent" Grid.Column="1">
+                <ScrollViewer>
+                    <Grid Margin="28" RowDefinitions="Auto 24 Auto 18 Auto 18 Auto * Auto">
 
-                    <TextBlock x:Name="WeatherGlyph" Text="☁" FontFamily="Segoe UI Symbol" FontSize="72" VerticalAlignment="Center" />
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="260" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="TemperatureText" Text="--°" FontSize="58" FontWeight="SemiBold" />
-                        </StackPanel>
-                        <TextBlock x:Name="ConditionText" Text="Получаем прогноз" FontSize="18" Margin="2,0,0,0" />
-                        <TextBlock x:Name="FeelsLikeText" Text="Ощущается: --°" Margin="2,5,0,0" Opacity="0.68" />
-                    </StackPanel>
-                </Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="CityText" Text="Погода" FontSize="24" FontWeight="SemiBold" />
+                                <TextBlock x:Name="UpdatedText" Text="Загрузка…" Margin="0,4,0,0" Opacity="0.68" />
+                            </StackPanel>
 
-                <UniformGrid Grid.Row="4" Columns="3">
-                    <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,8,0">
-                        <StackPanel>
-                            <TextBlock Text="Влажность" Opacity="0.68" />
-                            <TextBlock x:Name="HumidityText" Text="--%" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource MetricCardStyle}" Margin="4,0">
-                        <StackPanel>
-                            <TextBlock Text="Ветер" Opacity="0.68" />
-                            <TextBlock x:Name="WindText" Text="-- м/с" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource MetricCardStyle}" Margin="8,0,0,0">
-                        <StackPanel>
-                            <TextBlock Text="Давление" Opacity="0.68" />
-                            <TextBlock x:Name="PressureText" Text="-- мм" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
-                        </StackPanel>
-                    </Border>
-                </UniformGrid>
+                            <TextBox x:Name="CityBox" Grid.Column="1" Height="36" VerticalContentAlignment="Center"
+                             Text="Санкт-Петербург" ToolTip="Введите город"
+                             KeyDown="CityBox_OnKeyDown" />
+                            <Button Grid.Column="3" Height="36" Padding="18,0" Content="Обновить" Click="RefreshButton_OnClick" />
+                        </Grid>
 
-                <StackPanel Grid.Row="6">
-                    <TextBlock Text="Ближайшие часы" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,10" />
-                    <ItemsControl x:Name="HourlyItems">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Rows="1" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel HorizontalAlignment="Center" Margin="4">
-                                    <TextBlock Text="{Binding Time}" HorizontalAlignment="Center" Opacity="0.68" />
-                                    <TextBlock Text="{Binding Glyph}" FontFamily="Segoe UI Symbol" FontSize="24" HorizontalAlignment="Center" Margin="0,7" />
-                                    <TextBlock Text="{Binding Temperature}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="28" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock x:Name="WeatherGlyph" Text="☁" FontFamily="Segoe UI Symbol" FontSize="72" VerticalAlignment="Center" />
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="TemperatureText" Text="--°" FontSize="58" FontWeight="SemiBold" />
                                 </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+                                <TextBlock x:Name="ConditionText" Text="Получаем прогноз" FontSize="18" Margin="2,0,0,0" />
+                                <TextBlock x:Name="FeelsLikeText" Text="Ощущается: --°" Margin="2,5,0,0" Opacity="0.68" />
+                            </StackPanel>
+                        </Grid>
 
-                <StackPanel Grid.Row="7" Margin="0,18,0,0">
-                    <TextBlock Text="7 дней" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8" />
-                    <ItemsControl x:Name="DailyItems">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="34">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="120" />
-                                        <ColumnDefinition Width="45" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="70" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding Day}" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Glyph}" FontFamily="Segoe UI Symbol" FontSize="18" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Condition}" VerticalAlignment="Center" Opacity="0.68" />
-                                    <TextBlock Grid.Column="3" Text="{Binding Range}" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="SemiBold" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+                        <UniformGrid Grid.Row="4" Columns="3">
+                            <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <TextBlock Text="Влажность" Opacity="0.68" />
+                                    <TextBlock x:Name="HumidityText" Text="--%" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}" Margin="4,0">
+                                <StackPanel>
+                                    <TextBlock Text="Ветер" Opacity="0.68" />
+                                    <TextBlock x:Name="WindText" Text="-- м/с" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}" Margin="8,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Давление" Opacity="0.68" />
+                                    <TextBlock x:Name="PressureText" Text="-- мм" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
 
-                <TextBlock x:Name="StatusText" Grid.Row="8" Margin="0,14,0,0" Opacity="0.68" Text="Open-Meteo" />
+                        <StackPanel Grid.Row="6">
+                            <TextBlock Text="Ближайшие часы" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,10" />
+                            <ItemsControl x:Name="HourlyItems">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Rows="1" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel HorizontalAlignment="Center" Margin="4">
+                                            <TextBlock Text="{Binding Time}" HorizontalAlignment="Center" Opacity="0.68" />
+                                            <TextBlock Text="{Binding Glyph}" FontFamily="Segoe UI Symbol" FontSize="24" HorizontalAlignment="Center" Margin="0,7" />
+                                            <TextBlock Text="{Binding Temperature}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="7" Margin="0,18,0,0">
+                            <TextBlock Text="7 дней" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <ItemsControl x:Name="DailyItems">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Height="34">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="120" />
+                                                <ColumnDefinition Width="45" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="70" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Day}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Glyph}" FontFamily="Segoe UI Symbol" FontSize="18" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Condition}" VerticalAlignment="Center" Opacity="0.68" />
+                                            <TextBlock Grid.Column="3" Text="{Binding Range}" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="SemiBold" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <TextBlock x:Name="StatusText" Grid.Row="8" Margin="0,14,0,0" Opacity="0.68" Text="Open-Meteo" />
+                    </Grid>
+                </ScrollViewer>
             </Grid>
-        </ScrollViewer>
+
+            <ContentControl
+                x:Name="SecondaryContent"
+                Grid.Column="1"
+                Visibility="Collapsed" />
+        </Grid>
     </Grid>
 </Window>
