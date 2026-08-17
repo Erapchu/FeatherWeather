@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Shell;
+using FeatherWeather.ViewModels;
+using FeatherWeather.Views;
 
 namespace FeatherWeather;
 

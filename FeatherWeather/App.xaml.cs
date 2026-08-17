@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using FeatherWeather.Services;
+using FeatherWeather.ViewModels;
+using FeatherWeather.Views;
 using System.Windows;
 
 namespace FeatherWeather;
@@ -10,6 +12,7 @@ public partial class App : Application
         .AddSingleton<WeatherCache>()
         .AddSingleton<WeatherService>()
         .AddSingleton<MainViewModel>()
+        .AddSingleton<SettingsViewModel>()
         .AddSingleton<SettingsView>()
         .AddSingleton<MainWindow>()
         .BuildServiceProvider(

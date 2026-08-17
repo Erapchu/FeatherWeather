@@ -4,7 +4,7 @@ using FeatherWeather.Models;
 using FeatherWeather.Services;
 using System.Globalization;
 
-namespace FeatherWeather;
+namespace FeatherWeather.ViewModels;
 
 internal sealed partial class MainViewModel : ObservableObject, IDisposable
 {
