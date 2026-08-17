@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Shell;
 using FeatherWeather.Services;
@@ -9,15 +10,17 @@ namespace FeatherWeather;
 internal partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private readonly Lazy<SettingsView> _settingsView;
     private bool _firstShown = true;
 
-    public MainWindow(MainViewModel viewModel, SettingsView settingsView)
+    public MainWindow(MainViewModel viewModel, Lazy<SettingsView> settingsView)
     {
         InitializeComponent();
 
         _viewModel = viewModel;
+        _settingsView = settingsView;
         DataContext = viewModel;
-        SecondaryContent.Content = settingsView;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         SingleInstanceNotifier.RegisterWindow(this);
 
@@ -46,7 +49,23 @@ internal partial class MainWindow : Window
             });
 
         ContentRendered += OnContentRendered;
-        Closed += (_, _) => _viewModel.CancelPendingRefresh();
+        Closed += OnClosed;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.IsSettingsVisible) &&
+            _viewModel.IsSettingsVisible &&
+            SecondaryContent.Content is null)
+        {
+            SecondaryContent.Content = _settingsView.Value;
+        }
+    }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.CancelPendingRefresh();
     }
 
     private async void OnContentRendered(object? sender, EventArgs e)

@@ -6,10 +6,10 @@ using System.Globalization;
 
 namespace FeatherWeather.ViewModels;
 
-internal sealed partial class MainViewModel : ObservableObject, IDisposable
+internal sealed partial class MainViewModel(
+    WeatherCache weatherCache,
+    WeatherService weatherService) : ObservableObject, IDisposable
 {
-    private readonly WeatherCache _weatherCache;
-    private readonly WeatherService _weatherService;
     private CancellationTokenSource? _refreshCts;
     private bool _initialized;
 
@@ -55,12 +55,6 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isSettingsVisible;
 
-    public MainViewModel(WeatherCache weatherCache, WeatherService weatherService)
-    {
-        _weatherCache = weatherCache;
-        _weatherService = weatherService;
-    }
-
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -68,7 +62,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _initialized = true;
 
-        CachedWeather? cached = await Task.Run(_weatherCache.TryLoad);
+        CachedWeather? cached = await Task.Run(weatherCache.TryLoad);
         if (cached is not null)
         {
             City = cached.City;
@@ -105,7 +99,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            var (place, forecast) = await _weatherService.GetWeatherAsync(city, cancellationToken);
+            var (place, forecast) = await weatherService.GetWeatherAsync(city, cancellationToken);
             DateTimeOffset now = DateTimeOffset.Now;
 
             ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
@@ -119,7 +113,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
                 Forecast = forecast
             };
 
-            await Task.Run(() => _weatherCache.Save(cachedWeather), cancellationToken);
+            await Task.Run(() => weatherCache.Save(cachedWeather), cancellationToken);
         }
         catch (OperationCanceledException)
         {

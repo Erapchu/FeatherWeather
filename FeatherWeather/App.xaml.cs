@@ -14,6 +14,7 @@ public partial class App : Application
         .AddSingleton<MainViewModel>()
         .AddSingleton<SettingsViewModel>()
         .AddSingleton<SettingsView>()
+        .AddSingleton(sp => new Lazy<SettingsView>(sp.GetRequiredService<SettingsView>))
         .AddSingleton<MainWindow>()
         .BuildServiceProvider(
             new ServiceProviderOptions
