@@ -1,45 +1,36 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using FeatherWeather.Services;
 using System.Windows;
 
 namespace FeatherWeather;
 
-public partial class App : System.Windows.Application
+public partial class App : Application
 {
-    private static readonly IHost _host = Host
-        .CreateDefaultBuilder()
-        .ConfigureServices((context, services) =>
-        {
-            services.AddSingleton<WeatherCache>();
-            services.AddSingleton<WeatherService>();
-            services.AddSingleton<MainViewModel>();
-            services.AddSingleton<SettingsView>();
-            services.AddSingleton<MainWindow>();
-        })
-        .Build();
+    private static readonly ServiceProvider _services = new ServiceCollection()
+        .AddSingleton<WeatherCache>()
+        .AddSingleton<WeatherService>()
+        .AddSingleton<MainViewModel>()
+        .AddSingleton<SettingsView>()
+        .AddSingleton<MainWindow>()
+        .BuildServiceProvider(
+            new ServiceProviderOptions
+            {
+                ValidateOnBuild = true,
+                ValidateScopes = true
+            });
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        _host.Start();
-
-        MainWindow window = _host.Services.GetRequiredService<MainWindow>();
+        MainWindow window = _services.GetRequiredService<MainWindow>();
         MainWindow = window;
         window.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        try
-        {
-            _host.StopAsync().GetAwaiter().GetResult();
-        }
-        finally
-        {
-            _host.Dispose();
-            base.OnExit(e);
-        }
+        _services.Dispose();
+        base.OnExit(e);
     }
 }
