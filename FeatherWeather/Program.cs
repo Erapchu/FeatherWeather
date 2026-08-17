@@ -1,3 +1,5 @@
+using FeatherWeather.Services;
+
 namespace FeatherWeather;
 
 internal static class Program
