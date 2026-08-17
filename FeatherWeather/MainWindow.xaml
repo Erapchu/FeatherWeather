@@ -38,10 +38,7 @@
                         VerticalAlignment="Top"
                         Click="WeatherButton_OnClick"
                         ToolTip="Погода">
-                        <TextBlock
-                            FontFamily="Segoe UI Symbol"
-                            FontSize="20"
-                            Text="☀" />
+                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE706;" FontSize="18"/>
                     </Button>
 
                     <Button
@@ -51,10 +48,7 @@
                         VerticalAlignment="Bottom"
                         Click="SettingsButton_OnClick"
                         ToolTip="Настройки">
-                        <TextBlock
-                            FontFamily="Segoe Fluent Icons"
-                            FontSize="18"
-                            Text="&#xE713;" />
+                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE713;" FontSize="18"/>
                     </Button>
                 </Grid>
             </Border>
