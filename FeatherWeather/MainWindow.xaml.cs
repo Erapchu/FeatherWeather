@@ -11,7 +11,6 @@ internal partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly Lazy<SettingsView> _settingsView;
-    private bool _firstShown = true;
 
     public MainWindow(MainViewModel viewModel, Lazy<SettingsView> settingsView)
     {
@@ -70,10 +69,6 @@ internal partial class MainWindow : Window
 
     private async void OnContentRendered(object? sender, EventArgs e)
     {
-        if (!_firstShown)
-            return;
-
-        _firstShown = false;
         await _viewModel.InitializeAsync();
     }
 }
