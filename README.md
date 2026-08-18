@@ -2,21 +2,18 @@
 
 Feather Weather is a small, lightweight weather app for Windows built with WPF. It is designed for fast startup and a low memory footprint without sacrificing the essentials of a desktop forecast.
 
-The application UI is currently in Russian.
-
-## Screenshots
-![Alt text](images/app.png "App")
-
 ## Features
 
 - Search for weather by city name
 - Current temperature, apparent temperature, humidity, wind speed, and pressure
 - Forecast for the next 8 hours
 - 7-day forecast with daily high and low temperatures
-- Automatic light and dark themes based on the Windows setting
+- English, Russian, German, French, Spanish, Italian, Portuguese, Dutch, Polish, and Ukrainian localizations
+- System, light, and dark theme options
+- Settings and weather views with lightweight navigation
 - Immediate display of the last successful forecast from a local cache
 - Manual refresh with request cancellation
-- Single-instance application behavior
+- Single-instance behavior that activates the existing window when the app is launched again
 
 Weather and geocoding data are provided by [Open-Meteo](https://open-meteo.com/). No API key is required.
 
@@ -26,8 +23,9 @@ Weather and geocoding data are provided by [Open-Meteo](https://open-meteo.com/)
 - Built-in WPF Fluent theme (`ThemeMode="System"`)
 - Open-Meteo Forecast and Geocoding APIs
 - `System.Text.Json` source generation
-- No third-party NuGet packages
-- No dependency-injection container, Generic Host, WebView, MVVM framework, or charting library
+- `CommunityToolkit.Mvvm` for observable state and commands
+- `Microsoft.Extensions.DependencyInjection` for application services
+- No Generic Host, WebView, or charting library
 
 ## Requirements
 
@@ -43,7 +41,7 @@ From the repository root:
 dotnet run --project .\FeatherWeather\FeatherWeather.csproj -c Release
 ```
 
-The default city is Saint Petersburg. Enter another city and press **Enter** or use the refresh button to load its forecast.
+The default city is Saint Petersburg. Enter another city and press **Enter** or use the refresh button to load its forecast. Language and appearance can be changed from the settings view.
 
 ## Build
 
@@ -65,23 +63,25 @@ The project intentionally keeps `PublishSingleFile` disabled. A regular framewor
 
 ## Cache and startup behavior
 
-The most recent successful forecast is stored at:
+Application data is stored under `%LOCALAPPDATA%\FeatherWeather`:
 
 ```text
-%LOCALAPPDATA%\FeatherWeather\weather.json
+weather.json    Last successful forecast
+settings.json   Persisted language selection
 ```
 
-On startup, the main window is displayed first. The cached forecast is then loaded and shown when available, while a fresh request runs in the background. Cache reads and writes are best-effort, so a missing or invalid cache does not prevent the application from running.
+On startup, settings and localization are initialized before the main window is shown. The cached forecast is then loaded and displayed when available, while a fresh request runs in the background. Cache and settings I/O is best-effort, so missing or invalid files do not prevent the application from running.
 
 There are no background polling timers. Weather data is requested only at startup or when the user refreshes it.
 
 ## Performance choices
 
-- A single static `HttpClient` is reused for all requests.
+- One application-lifetime `HttpClient` is reused for all weather requests.
 - Network access starts only after the window has rendered.
 - JSON serialization metadata is generated at compile time.
 - Release builds enable optimization, tiered compilation, tiered PGO, and ReadyToRun publishing.
-- Straightforward WPF code-behind is used where it keeps the application smaller and simpler.
+- MVVM keeps presentation state out of the views, while minimal code-behind handles window-specific behavior.
+- The settings view is created only when it is first opened.
 
 ## Measuring memory usage
 
@@ -103,4 +103,3 @@ $process | Select-Object ProcessName,
 - Compact window mode
 - Short-term precipitation forecast
 - On-demand UV index and air quality data
-- Manual theme selection
