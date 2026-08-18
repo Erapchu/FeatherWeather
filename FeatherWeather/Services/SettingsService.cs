@@ -7,6 +7,7 @@ namespace FeatherWeather.Services;
 public sealed class SettingsService
 {
     public const string DefaultLanguage = "en";
+    public const string DefaultTheme = "System";
 
     private static readonly HashSet<string> SupportedLanguages =
     [
@@ -16,19 +17,21 @@ public sealed class SettingsService
     private AppSettings _settings = new();
 
     public event EventHandler? LanguageChanged;
+    public event EventHandler? ThemeChanged;
 
     public string Language => _settings.Language;
+    public string City => _settings.City;
+    public string Theme => _settings.Theme;
 
     public void Initialize()
     {
         AppSettings? loadedSettings = LoadSettings();
-        string language = loadedSettings?.Language
-            ?? DefaultLanguage;
-
-        _settings = new AppSettings { Language = NormalizeLanguage(language) };
-
-        if (loadedSettings is null || loadedSettings.Language != _settings.Language)
-            Save();
+        _settings = new AppSettings
+        {
+            Language = NormalizeLanguage(loadedSettings?.Language ?? DefaultLanguage),
+            City = loadedSettings?.City?.Trim() ?? string.Empty,
+            Theme = NormalizeTheme(loadedSettings?.Theme ?? DefaultTheme)
+        };
     }
 
     public void SetLanguage(string language)
@@ -40,6 +43,27 @@ public sealed class SettingsService
         _settings = _settings with { Language = language };
         Save();
         LanguageChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void SetCity(string city)
+    {
+        city = city.Trim();
+        if (_settings.City == city)
+            return;
+
+        _settings = _settings with { City = city };
+        Save();
+    }
+
+    public void SetTheme(string theme)
+    {
+        theme = NormalizeTheme(theme);
+        if (_settings.Theme == theme)
+            return;
+
+        _settings = _settings with { Theme = theme };
+        Save();
+        ThemeChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static AppSettings? LoadSettings()
@@ -84,4 +108,7 @@ public sealed class SettingsService
 
     private static string NormalizeLanguage(string language) =>
         SupportedLanguages.Contains(language) ? language : DefaultLanguage;
+
+    private static string NormalizeTheme(string theme) =>
+        theme is "Light" or "Dark" ? theme : DefaultTheme;
 }

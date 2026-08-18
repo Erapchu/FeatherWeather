@@ -31,6 +31,8 @@ public partial class App : Application
 
         SettingsService settingsService = _services.GetRequiredService<SettingsService>();
         settingsService.Initialize();
+        settingsService.ThemeChanged += OnThemeChanged;
+        ApplyTheme(settingsService.Theme);
         LocalizationManager.Instance.Initialize(settingsService);
 
         MainWindow window = _services.GetRequiredService<MainWindow>();
@@ -40,7 +42,21 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _services.GetRequiredService<SettingsService>().ThemeChanged -= OnThemeChanged;
         _services.Dispose();
         base.OnExit(e);
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e) =>
+        ApplyTheme(((SettingsService)sender!).Theme);
+
+    private void ApplyTheme(string theme)
+    {
+        ThemeMode = theme switch
+        {
+            "Light" => ThemeMode.Light,
+            "Dark" => ThemeMode.Dark,
+            _ => ThemeMode.System
+        };
     }
 }

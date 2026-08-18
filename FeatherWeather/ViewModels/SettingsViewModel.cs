@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using FeatherWeather.Resources;
 using FeatherWeather.Services;
-using System.Windows;
 
 namespace FeatherWeather.ViewModels;
 
@@ -23,20 +22,13 @@ public sealed partial class SettingsViewModel(SettingsService settingsService) :
     ];
 
     [ObservableProperty]
-    public partial string SelectedTheme { get; set; } = Application.Current.ThemeMode.ToString();
+    public partial string SelectedTheme { get; set; } = settingsService.Theme;
 
     [ObservableProperty]
     public partial string SelectedLanguage { get; set; } = settingsService.Language;
 
-    partial void OnSelectedThemeChanged(string value)
-    {
-        Application.Current.ThemeMode = value switch
-        {
-            "Light" => ThemeMode.Light,
-            "Dark" => ThemeMode.Dark,
-            _ => ThemeMode.System
-        };
-    }
+    partial void OnSelectedThemeChanged(string value) =>
+        settingsService.SetTheme(value);
 
     partial void OnSelectedLanguageChanged(string value) =>
         settingsService.SetLanguage(value);

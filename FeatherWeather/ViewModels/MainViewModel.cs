@@ -11,14 +11,22 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly WeatherCache weatherCache;
     private readonly WeatherService weatherService;
+    private readonly SettingsService settingsService;
     private CancellationTokenSource? _refreshCts;
     private ForecastSnapshot? _lastForecast;
     private bool _initialized;
 
-    public MainViewModel(WeatherCache weatherCache, WeatherService weatherService)
+    public MainViewModel(
+        WeatherCache weatherCache,
+        WeatherService weatherService,
+        SettingsService settingsService)
     {
         this.weatherCache = weatherCache;
         this.weatherService = weatherService;
+        this.settingsService = settingsService;
+        City = string.IsNullOrWhiteSpace(settingsService.City)
+            ? Strings.DefaultCity
+            : settingsService.City;
         LocalizationManager.Instance.CultureChanged += OnCultureChanged;
     }
 
@@ -74,7 +82,12 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         CachedWeather? cached = await Task.Run(weatherCache.TryLoad);
         if (cached is not null)
         {
-            City = cached.City;
+            if (string.IsNullOrWhiteSpace(settingsService.City))
+            {
+                City = cached.City;
+                settingsService.SetCity(cached.City);
+            }
+
             ApplyForecast(cached.City, cached.Country, cached.Forecast, cached.SavedAt, fromCache: true);
         }
 
@@ -113,6 +126,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
             ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
             City = place.Name;
+            settingsService.SetCity(place.Name);
 
             var cachedWeather = new CachedWeather
             {
@@ -257,6 +271,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        if (City.Trim().Length >= 2)
+            settingsService.SetCity(City);
+
         LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
