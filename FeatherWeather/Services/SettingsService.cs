@@ -92,17 +92,32 @@ public sealed class SettingsService
 
     private void Save()
     {
+        string temporaryPath = AtomicFile.CreateTemporaryPath(AppDataPaths.SettingsFilePath);
+
         try
         {
             Directory.CreateDirectory(AppDataPaths.DirectoryPath);
-            using FileStream stream = File.Create(AppDataPaths.SettingsFilePath);
-            JsonSerializer.Serialize(stream, _settings, SettingsJsonContext.Default.AppSettings);
+            using (var stream = new FileStream(
+                       temporaryPath,
+                       FileMode.CreateNew,
+                       FileAccess.Write,
+                       FileShare.None))
+            {
+                JsonSerializer.Serialize(stream, _settings, SettingsJsonContext.Default.AppSettings);
+                stream.Flush(flushToDisk: true);
+            }
+
+            AtomicFile.Commit(temporaryPath, AppDataPaths.SettingsFilePath);
         }
         catch (IOException)
         {
         }
         catch (UnauthorizedAccessException)
         {
+        }
+        finally
+        {
+            AtomicFile.TryDelete(temporaryPath);
         }
     }
 

@@ -79,7 +79,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _initialized = true;
 
-        CachedWeather? cached = await Task.Run(weatherCache.TryLoad);
+        CachedWeather? cached = await weatherCache.TryLoadAsync();
         if (cached is not null)
         {
             if (string.IsNullOrWhiteSpace(settingsService.City))
@@ -136,7 +136,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
                 Forecast = forecast
             };
 
-            await Task.Run(() => weatherCache.Save(cachedWeather), cancellationToken);
+            await weatherCache.SaveAsync(cachedWeather, cancellationToken);
         }
         catch (OperationCanceledException)
         {
