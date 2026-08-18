@@ -1,56 +1,65 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FeatherWeather.Models;
+using FeatherWeather.Resources;
 using FeatherWeather.Services;
 using System.Globalization;
 
 namespace FeatherWeather.ViewModels;
 
-internal sealed partial class MainViewModel(
-    WeatherCache weatherCache,
-    WeatherService weatherService) : ObservableObject, IDisposable
+internal sealed partial class MainViewModel : ObservableObject, IDisposable
 {
+    private readonly WeatherCache weatherCache;
+    private readonly WeatherService weatherService;
     private CancellationTokenSource? _refreshCts;
+    private ForecastSnapshot? _lastForecast;
     private bool _initialized;
 
-    [ObservableProperty]
-    private string _city = "Санкт-Петербург";
+    public MainViewModel(WeatherCache weatherCache, WeatherService weatherService)
+    {
+        this.weatherCache = weatherCache;
+        this.weatherService = weatherService;
+        LocalizationManager.Instance.CultureChanged += OnCultureChanged;
+    }
 
     [ObservableProperty]
-    private string _displayCity = "Погода";
+    private string _city = Strings.DefaultCity;
 
     [ObservableProperty]
-    private string _updatedText = "Загрузка…";
+    public partial string DisplayCity { get; set; } = Strings.DefaultDisplayCity;
 
     [ObservableProperty]
-    private string _weatherGlyph = "☁";
+    public partial string UpdatedText { get; set; } = Strings.Loading;
 
     [ObservableProperty]
-    private string _temperatureText = "--°";
+    public partial string WeatherGlyph { get; set; } = Strings.WeatherGlyphCloudy;
 
     [ObservableProperty]
-    private string _conditionText = "Получаем прогноз";
+    public partial string TemperatureText { get; set; } = Strings.TemperaturePlaceholder;
 
     [ObservableProperty]
-    private string _feelsLikeText = "Ощущается: --°";
+    public partial string ConditionText { get; set; } = Strings.FetchingForecast;
 
     [ObservableProperty]
-    private string _humidityText = "--%";
+    public partial string FeelsLikeText { get; set; } = Strings.FeelsLikePlaceholder;
 
     [ObservableProperty]
-    private string _windText = "-- м/с";
+    public partial string HumidityText { get; set; } = Strings.HumidityPlaceholder;
 
     [ObservableProperty]
-    private string _pressureText = "-- мм";
+    public partial string WindText { get; set; } = Strings.WindPlaceholder;
 
     [ObservableProperty]
-    private string _statusText = "Open-Meteo";
+    public partial string PressureText { get; set; } = Strings.PressurePlaceholder;
 
     [ObservableProperty]
-    private IReadOnlyList<HourItem> _hourlyItems = [];
+    public partial string StatusText { get; set; } = Strings.DataSource;
 
     [ObservableProperty]
-    private IReadOnlyList<DayItem> _dailyItems = [];
+    public partial IReadOnlyList<HourItem> HourlyItems { get; set; } = [];
+
+    [ObservableProperty]
+    public partial IReadOnlyList<DayItem> DailyItems { get; set; } = [];
 
     [ObservableProperty]
     private bool _isSettingsVisible;
@@ -95,7 +104,7 @@ internal sealed partial class MainViewModel(
         CancellationToken cancellationToken = _refreshCts.Token;
 
         if (showLoadingText)
-            StatusText = "Обновляем…";
+            StatusText = Strings.Updating;
 
         try
         {
@@ -120,7 +129,7 @@ internal sealed partial class MainViewModel(
         }
         catch (Exception ex)
         {
-            StatusText = "Не удалось обновить: " + ex.Message;
+            StatusText = string.Format(CultureInfo.CurrentCulture, Strings.UpdateFailedFormat, ex.Message);
         }
     }
 
@@ -131,21 +140,48 @@ internal sealed partial class MainViewModel(
         DateTimeOffset updatedAt,
         bool fromCache)
     {
+        _lastForecast = new ForecastSnapshot(city, country, forecast, updatedAt, fromCache);
         CurrentWeather current = forecast.Current;
-        DisplayCity = string.IsNullOrWhiteSpace(country) ? city : $"{city}, {country}";
-        TemperatureText = $"{Math.Round(current.Temperature):0}°";
+        DisplayCity = string.IsNullOrWhiteSpace(country)
+            ? city
+            : string.Format(CultureInfo.CurrentCulture, Strings.LocationFormat, city, country);
+        TemperatureText = string.Format(CultureInfo.CurrentCulture, Strings.TemperatureFormat, Math.Round(current.Temperature));
         WeatherGlyph = WeatherCode.Glyph(current.WeatherCode);
         ConditionText = WeatherCode.Description(current.WeatherCode);
-        FeelsLikeText = $"Ощущается как {Math.Round(current.ApparentTemperature):0}°";
-        HumidityText = $"{current.Humidity}%";
-        WindText = $"{current.WindSpeed / 3.6:0.#} м/с";
-        PressureText = $"{current.SurfacePressure * 0.750062:0} мм";
+        FeelsLikeText = string.Format(CultureInfo.CurrentCulture, Strings.FeelsLikeFormat, Math.Round(current.ApparentTemperature));
+        HumidityText = string.Format(CultureInfo.CurrentCulture, Strings.HumidityFormat, current.Humidity);
+        WindText = string.Format(CultureInfo.CurrentCulture, Strings.WindSpeedFormat, current.WindSpeed / 3.6);
+        PressureText = string.Format(CultureInfo.CurrentCulture, Strings.PressureFormat, current.SurfacePressure * 0.750062);
         UpdatedText = fromCache
-            ? $"Сохранено {updatedAt:HH:mm} · обновляем в фоне"
-            : $"Обновлено {updatedAt:HH:mm}";
-        StatusText = "Данные: Open-Meteo";
+            ? string.Format(CultureInfo.CurrentCulture, Strings.CachedUpdateFormat, updatedAt)
+            : string.Format(CultureInfo.CurrentCulture, Strings.UpdatedFormat, updatedAt);
+        StatusText = Strings.DataSource;
         HourlyItems = BuildHourly(forecast.Hourly, forecast.Current.Time);
         DailyItems = BuildDaily(forecast.Daily);
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        if (_lastForecast is { } snapshot)
+        {
+            ApplyForecast(
+                snapshot.City,
+                snapshot.Country,
+                snapshot.Forecast,
+                snapshot.UpdatedAt,
+                snapshot.FromCache);
+            return;
+        }
+
+        DisplayCity = Strings.DefaultDisplayCity;
+        UpdatedText = Strings.Loading;
+        TemperatureText = Strings.TemperaturePlaceholder;
+        ConditionText = Strings.FetchingForecast;
+        FeelsLikeText = Strings.FeelsLikePlaceholder;
+        HumidityText = Strings.HumidityPlaceholder;
+        WindText = Strings.WindPlaceholder;
+        PressureText = Strings.PressurePlaceholder;
+        StatusText = Strings.DataSource;
     }
 
     private static HourItem[] BuildHourly(HourlyWeather hourly, string currentTime)
@@ -177,7 +213,10 @@ internal sealed partial class MainViewModel(
             int code = index < hourly.WeatherCode.Length ? hourly.WeatherCode[index] : 0;
             double temperature = index < hourly.Temperature.Length ? hourly.Temperature[index] : 0;
 
-            items[i] = new HourItem(time.ToString("HH:mm"), WeatherCode.Glyph(code), $"{Math.Round(temperature):0}°");
+            items[i] = new HourItem(
+                time.ToString(Strings.ShortTimeFormat, CultureInfo.CurrentCulture),
+                WeatherCode.Glyph(code),
+                string.Format(CultureInfo.CurrentCulture, Strings.TemperatureFormat, Math.Round(temperature)));
         }
 
         return items;
@@ -194,19 +233,23 @@ internal sealed partial class MainViewModel(
         }.Min();
 
         var items = new DayItem[count];
-        CultureInfo ru = CultureInfo.GetCultureInfo("ru-RU");
+        CultureInfo culture = CultureInfo.CurrentCulture;
 
         for (int i = 0; i < count; i++)
         {
             DateTime.TryParse(daily.Time[i], CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date);
-            string day = i == 0 ? "Сегодня" : ru.TextInfo.ToTitleCase(date.ToString("ddd, d MMM", ru));
+            string day = i == 0 ? Strings.Today : culture.TextInfo.ToTitleCase(date.ToString(Strings.ShortDayFormat, culture));
             int code = daily.WeatherCode[i];
 
             items[i] = new DayItem(
                 day,
                 WeatherCode.Glyph(code),
                 WeatherCode.Description(code),
-                $"{Math.Round(daily.MaxTemperature[i]):0}°  {Math.Round(daily.MinTemperature[i]):0}°");
+                string.Format(
+                    CultureInfo.CurrentCulture,
+                    Strings.TemperatureRangeFormat,
+                    Math.Round(daily.MaxTemperature[i]),
+                    Math.Round(daily.MinTemperature[i])));
         }
 
         return items;
@@ -214,9 +257,17 @@ internal sealed partial class MainViewModel(
 
     public void Dispose()
     {
+        LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
     }
+
+    private sealed record ForecastSnapshot(
+        string City,
+        string Country,
+        ForecastResponse Forecast,
+        DateTimeOffset UpdatedAt,
+        bool FromCache);
 
     public sealed record HourItem(string Time, string Glyph, string Temperature);
     public sealed record DayItem(string Day, string Glyph, string Condition, string Range);
@@ -226,33 +277,33 @@ internal static class WeatherCode
 {
     public static string Glyph(int code) => code switch
     {
-        0 => "☀",
-        1 or 2 => "⛅",
-        3 => "☁",
-        45 or 48 => "≋",
-        51 or 53 or 55 or 56 or 57 => "☂",
-        61 or 63 or 65 or 66 or 67 or 80 or 81 or 82 => "☔",
-        71 or 73 or 75 or 77 or 85 or 86 => "❄",
-        95 or 96 or 99 => "ϟ",
-        _ => "☁"
+        0 => Strings.WeatherGlyphClear,
+        1 or 2 => Strings.WeatherGlyphPartlyCloudy,
+        3 => Strings.WeatherGlyphCloudy,
+        45 or 48 => Strings.WeatherGlyphFog,
+        51 or 53 or 55 or 56 or 57 => Strings.WeatherGlyphDrizzle,
+        61 or 63 or 65 or 66 or 67 or 80 or 81 or 82 => Strings.WeatherGlyphRain,
+        71 or 73 or 75 or 77 or 85 or 86 => Strings.WeatherGlyphSnow,
+        95 or 96 or 99 => Strings.WeatherGlyphThunderstorm,
+        _ => Strings.WeatherGlyphCloudy
     };
 
     public static string Description(int code) => code switch
     {
-        0 => "Ясно",
-        1 => "Преимущественно ясно",
-        2 => "Переменная облачность",
-        3 => "Пасмурно",
-        45 or 48 => "Туман",
-        51 or 53 or 55 => "Морось",
-        56 or 57 => "Ледяная морось",
-        61 or 63 or 65 => "Дождь",
-        66 or 67 => "Ледяной дождь",
-        71 or 73 or 75 or 77 => "Снег",
-        80 or 81 or 82 => "Ливень",
-        85 or 86 => "Снегопад",
-        95 => "Гроза",
-        96 or 99 => "Гроза с градом",
-        _ => "Нет данных"
+        0 => Strings.WeatherClearSky,
+        1 => Strings.WeatherMainlyClear,
+        2 => Strings.WeatherPartlyCloudy,
+        3 => Strings.WeatherOvercast,
+        45 or 48 => Strings.WeatherFog,
+        51 or 53 or 55 => Strings.WeatherDrizzle,
+        56 or 57 => Strings.WeatherFreezingDrizzle,
+        61 or 63 or 65 => Strings.WeatherRain,
+        66 or 67 => Strings.WeatherFreezingRain,
+        71 or 73 or 75 or 77 => Strings.WeatherSnow,
+        80 or 81 or 82 => Strings.WeatherRainShowers,
+        85 or 86 => Strings.WeatherSnowShowers,
+        95 => Strings.WeatherThunderstorm,
+        96 or 99 => Strings.WeatherThunderstormWithHail,
+        _ => Strings.WeatherUnknown
     };
 }

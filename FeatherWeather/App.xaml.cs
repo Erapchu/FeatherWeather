@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using FeatherWeather.Services;
+using FeatherWeather.Resources;
 using FeatherWeather.ViewModels;
 using FeatherWeather.Views;
 using System.Windows;
@@ -11,6 +12,7 @@ public partial class App : Application
     private static readonly ServiceProvider _services = new ServiceCollection()
         .AddSingleton<WeatherCache>()
         .AddSingleton<WeatherService>()
+        .AddSingleton<SettingsService>()
         .AddSingleton<MainViewModel>()
         .AddSingleton<SettingsViewModel>()
         .AddSingleton<SettingsView>()
@@ -26,6 +28,10 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        SettingsService settingsService = _services.GetRequiredService<SettingsService>();
+        settingsService.Initialize();
+        LocalizationManager.Instance.Initialize(settingsService);
 
         MainWindow window = _services.GetRequiredService<MainWindow>();
         MainWindow = window;

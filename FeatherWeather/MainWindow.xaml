@@ -2,12 +2,13 @@
         x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:resources="clr-namespace:FeatherWeather.Resources"
         xmlns:viewModels="clr-namespace:FeatherWeather.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type={x:Type viewModels:MainViewModel}, IsDesignTimeCreatable=False}"
-        Title="Feather Weather"
+        Title="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[AppTitle]}"
         Width="760" Height="610"
         MinWidth="620" MinHeight="520"
         WindowStartupLocation="CenterScreen"
@@ -22,7 +23,7 @@
                 <TextBlock
                     VerticalAlignment="Center"
                     FontSize="12"
-                    Text="Feather Weather"/>
+                    Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[AppTitle]}"/>
             </StackPanel>
         </Grid>
 
@@ -43,7 +44,7 @@
                         Margin="8"
                         VerticalAlignment="Top"
                         Command="{Binding ShowWeatherCommand}"
-                        ToolTip="Погода">
+                        ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[NavigationWeatherToolTip]}">
                         <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE706;" FontSize="18"/>
                     </Button>
 
@@ -53,7 +54,7 @@
                         Margin="8"
                         VerticalAlignment="Bottom"
                         Command="{Binding ShowSettingsCommand}"
-                        ToolTip="Настройки">
+                        ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[NavigationSettingsToolTip]}">
                         <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE713;" FontSize="18"/>
                     </Button>
                 </Grid>
@@ -87,12 +88,12 @@
                             </StackPanel>
 
                             <TextBox Grid.Column="1" Height="36" VerticalContentAlignment="Center"
-                             Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" ToolTip="Введите город" />
+                             Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[CityInputToolTip]}" />
                             <Button 
                                 Grid.Column="3"
                                 Width="42"
                                 Height="36"
-                                ToolTip="Обновить погоду"
+                                ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[RefreshWeatherToolTip]}"
                                 Command="{Binding RefreshCommand}"
                                 IsDefault="True">
                                 <TextBlock
@@ -123,26 +124,26 @@
                         <UniformGrid Grid.Row="4" Columns="3">
                             <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,8,0">
                                 <StackPanel>
-                                    <TextBlock Text="Влажность" Opacity="0.68" />
+                                    <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[HumidityLabel]}" Opacity="0.68" />
                                     <TextBlock Text="{Binding HumidityText}" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
                                 </StackPanel>
                             </Border>
                             <Border Style="{StaticResource MetricCardStyle}" Margin="4,0">
                                 <StackPanel>
-                                    <TextBlock Text="Ветер" Opacity="0.68" />
+                                    <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[WindLabel]}" Opacity="0.68" />
                                     <TextBlock Text="{Binding WindText}" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
                                 </StackPanel>
                             </Border>
                             <Border Style="{StaticResource MetricCardStyle}" Margin="8,0,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="Давление" Opacity="0.68" />
+                                    <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[PressureLabel]}" Opacity="0.68" />
                                     <TextBlock Text="{Binding PressureText}" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0" />
                                 </StackPanel>
                             </Border>
                         </UniformGrid>
 
                         <StackPanel Grid.Row="6">
-                            <TextBlock Text="Ближайшие часы" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,10" />
+                            <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[HourlyForecastHeading]}" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,10" />
                             <ItemsControl ItemsSource="{Binding HourlyItems}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -162,7 +163,7 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="7" Margin="0,18,0,0">
-                            <TextBlock Text="7 дней" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[SevenDayForecastHeading]}" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8" />
                             <ItemsControl ItemsSource="{Binding DailyItems}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>

@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using FeatherWeather.Models;
+using FeatherWeather.Resources;
 
 namespace FeatherWeather.Services;
 
@@ -26,7 +27,7 @@ internal sealed class WeatherService : IDisposable
     {
         string url = "https://geocoding-api.open-meteo.com/v1/search?name=" +
                      Uri.EscapeDataString(city) +
-                     "&count=1&language=ru&format=json";
+                     $"&count=1&language={GetGeocodingLanguage()}&format=json";
 
         await using Stream stream = await _http.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
         GeocodingResponse? response = await JsonSerializer.DeserializeAsync(
@@ -35,7 +36,7 @@ internal sealed class WeatherService : IDisposable
             cancellationToken).ConfigureAwait(false);
 
         return response?.Results?.FirstOrDefault()
-               ?? throw new InvalidOperationException("Город не найден.");
+               ?? throw new InvalidOperationException(Strings.CityNotFound);
     }
 
     private async Task<ForecastResponse> GetForecastAsync(GeoResult place, CancellationToken cancellationToken)
@@ -54,7 +55,15 @@ internal sealed class WeatherService : IDisposable
                    stream,
                    WeatherJsonContext.Default.ForecastResponse,
                    cancellationToken).ConfigureAwait(false)
-               ?? throw new InvalidOperationException("Сервис погоды вернул пустой ответ.");
+               ?? throw new InvalidOperationException(Strings.EmptyWeatherResponse);
+    }
+
+    private static string GetGeocodingLanguage()
+    {
+        string language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        return language is "en" or "ru" or "de" or "fr" or "es" or "it" or "pt" or "nl" or "pl" or "uk"
+            ? language
+            : "en";
     }
 
     public void Dispose() => _http.Dispose();

@@ -6,20 +6,14 @@ namespace FeatherWeather.Services;
 
 internal sealed class WeatherCache
 {
-    private static readonly string DirectoryPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "FeatherWeather");
-
-    private static readonly string FilePath = Path.Combine(DirectoryPath, "weather.json");
-
     public CachedWeather? TryLoad()
     {
         try
         {
-            if (!File.Exists(FilePath))
+            if (!File.Exists(AppDataPaths.WeatherCacheFilePath))
                 return null;
 
-            using FileStream stream = File.OpenRead(FilePath);
+            using FileStream stream = File.OpenRead(AppDataPaths.WeatherCacheFilePath);
             return JsonSerializer.Deserialize(stream, WeatherJsonContext.Default.CachedWeather);
         }
         catch
@@ -32,8 +26,8 @@ internal sealed class WeatherCache
     {
         try
         {
-            Directory.CreateDirectory(DirectoryPath);
-            using FileStream stream = File.Create(FilePath);
+            Directory.CreateDirectory(AppDataPaths.DirectoryPath);
+            using FileStream stream = File.Create(AppDataPaths.WeatherCacheFilePath);
             JsonSerializer.Serialize(stream, weather, WeatherJsonContext.Default.CachedWeather);
         }
         catch

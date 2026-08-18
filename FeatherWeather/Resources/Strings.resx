@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="AppTitle" xml:space="preserve"><value>Feather Weather</value></data>
+  <data name="NavigationWeatherToolTip" xml:space="preserve"><value>Weather</value></data>
+  <data name="NavigationSettingsToolTip" xml:space="preserve"><value>Settings</value></data>
+  <data name="CityInputToolTip" xml:space="preserve"><value>Enter a city</value></data>
+  <data name="RefreshWeatherToolTip" xml:space="preserve"><value>Refresh weather</value></data>
+  <data name="HumidityLabel" xml:space="preserve"><value>Humidity</value></data>
+  <data name="WindLabel" xml:space="preserve"><value>Wind</value></data>
+  <data name="PressureLabel" xml:space="preserve"><value>Pressure</value></data>
+  <data name="HourlyForecastHeading" xml:space="preserve"><value>Next hours</value></data>
+  <data name="SevenDayForecastHeading" xml:space="preserve"><value>7 days</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="ThemeLabel" xml:space="preserve"><value>App theme</value></data>
+  <data name="ThemeDescription" xml:space="preserve"><value>Choose an appearance or follow Windows settings.</value></data>
+  <data name="ThemeSystem" xml:space="preserve"><value>System</value></data>
+  <data name="ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="LanguageLabel" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Choose the application language.</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="LanguageRussian" xml:space="preserve"><value>Русский</value></data>
+  <data name="LanguageGerman" xml:space="preserve"><value>Deutsch</value></data>
+  <data name="LanguageFrench" xml:space="preserve"><value>Français</value></data>
+  <data name="LanguageSpanish" xml:space="preserve"><value>Español</value></data>
+  <data name="LanguageItalian" xml:space="preserve"><value>Italiano</value></data>
+  <data name="LanguagePortuguese" xml:space="preserve"><value>Português</value></data>
+  <data name="LanguageDutch" xml:space="preserve"><value>Nederlands</value></data>
+  <data name="LanguagePolish" xml:space="preserve"><value>Polski</value></data>
+  <data name="LanguageUkrainian" xml:space="preserve"><value>Українська</value></data>
+  <data name="DefaultCity" xml:space="preserve"><value>London</value></data>
+  <data name="DefaultDisplayCity" xml:space="preserve"><value>Weather</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="FetchingForecast" xml:space="preserve"><value>Fetching forecast</value></data>
+  <data name="FeelsLikePlaceholder" xml:space="preserve"><value>Feels like: --°</value></data>
+  <data name="TemperaturePlaceholder" xml:space="preserve"><value>--°</value></data>
+  <data name="HumidityPlaceholder" xml:space="preserve"><value>--%</value></data>
+  <data name="WindPlaceholder" xml:space="preserve"><value>-- m/s</value></data>
+  <data name="PressurePlaceholder" xml:space="preserve"><value>-- mmHg</value></data>
+  <data name="Updating" xml:space="preserve"><value>Updating…</value></data>
+  <data name="UpdateFailedFormat" xml:space="preserve"><value>Could not update: {0}</value></data>
+  <data name="FeelsLikeFormat" xml:space="preserve"><value>Feels like {0:0}°</value></data>
+  <data name="TemperatureFormat" xml:space="preserve"><value>{0:0}°</value></data>
+  <data name="TemperatureRangeFormat" xml:space="preserve"><value>{0:0}°  {1:0}°</value></data>
+  <data name="HumidityFormat" xml:space="preserve"><value>{0}%</value></data>
+  <data name="WindSpeedFormat" xml:space="preserve"><value>{0:0.#} m/s</value></data>
+  <data name="PressureFormat" xml:space="preserve"><value>{0:0} mmHg</value></data>
+  <data name="LocationFormat" xml:space="preserve"><value>{0}, {1}</value></data>
+  <data name="CachedUpdateFormat" xml:space="preserve"><value>Saved at {0:t} · updating in the background</value></data>
+  <data name="UpdatedFormat" xml:space="preserve"><value>Updated at {0:t}</value></data>
+  <data name="DataSource" xml:space="preserve"><value>Data: Open-Meteo</value></data>
+  <data name="Today" xml:space="preserve"><value>Today</value></data>
+  <data name="ShortTimeFormat" xml:space="preserve"><value>t</value></data>
+  <data name="ShortDayFormat" xml:space="preserve"><value>ddd, d MMM</value></data>
+  <data name="CityNotFound" xml:space="preserve"><value>City not found.</value></data>
+  <data name="EmptyWeatherResponse" xml:space="preserve"><value>The weather service returned an empty response.</value></data>
+  <data name="WeatherClearSky" xml:space="preserve"><value>Clear sky</value></data>
+  <data name="WeatherMainlyClear" xml:space="preserve"><value>Mainly clear</value></data>
+  <data name="WeatherPartlyCloudy" xml:space="preserve"><value>Partly cloudy</value></data>
+  <data name="WeatherOvercast" xml:space="preserve"><value>Overcast</value></data>
+  <data name="WeatherFog" xml:space="preserve"><value>Fog</value></data>
+  <data name="WeatherDrizzle" xml:space="preserve"><value>Drizzle</value></data>
+  <data name="WeatherFreezingDrizzle" xml:space="preserve"><value>Freezing drizzle</value></data>
+  <data name="WeatherRain" xml:space="preserve"><value>Rain</value></data>
+  <data name="WeatherFreezingRain" xml:space="preserve"><value>Freezing rain</value></data>
+  <data name="WeatherSnow" xml:space="preserve"><value>Snow</value></data>
+  <data name="WeatherRainShowers" xml:space="preserve"><value>Rain showers</value></data>
+  <data name="WeatherSnowShowers" xml:space="preserve"><value>Snow showers</value></data>
+  <data name="WeatherThunderstorm" xml:space="preserve"><value>Thunderstorm</value></data>
+  <data name="WeatherThunderstormWithHail" xml:space="preserve"><value>Thunderstorm with hail</value></data>
+  <data name="WeatherUnknown" xml:space="preserve"><value>No data</value></data>
+  <data name="WeatherGlyphClear" xml:space="preserve"><value>☀</value></data>
+  <data name="WeatherGlyphPartlyCloudy" xml:space="preserve"><value>⛅</value></data>
+  <data name="WeatherGlyphCloudy" xml:space="preserve"><value>☁</value></data>
+  <data name="WeatherGlyphFog" xml:space="preserve"><value>≋</value></data>
+  <data name="WeatherGlyphDrizzle" xml:space="preserve"><value>☂</value></data>
+  <data name="WeatherGlyphRain" xml:space="preserve"><value>☔</value></data>
+  <data name="WeatherGlyphSnow" xml:space="preserve"><value>❄</value></data>
+  <data name="WeatherGlyphThunderstorm" xml:space="preserve"><value>ϟ</value></data>
+</root>

@@ -36,7 +36,7 @@ internal partial class MainWindow : Window
                         ? default
                         : new Thickness(4),
 
-                // Именно системные кнопки DWM
+                // Use the native DWM caption buttons.
                 UseAeroCaptionButtons = true,
 
                 NonClientFrameEdges =
