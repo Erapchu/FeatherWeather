@@ -8,13 +8,16 @@ internal sealed class GeocodingResponse
     public List<GeoResult>? Results { get; init; }
 }
 
-internal sealed class GeoResult
+public sealed class GeoResult
 {
     [JsonPropertyName("name")]
     public string Name { get; init; } = string.Empty;
 
     [JsonPropertyName("country")]
     public string Country { get; init; } = string.Empty;
+
+    [JsonPropertyName("admin1")]
+    public string Admin1 { get; init; } = string.Empty;
 
     [JsonPropertyName("latitude")]
     public double Latitude { get; init; }
@@ -24,6 +27,16 @@ internal sealed class GeoResult
 
     [JsonPropertyName("timezone")]
     public string Timezone { get; init; } = "auto";
+
+    [JsonIgnore]
+    public string LocationDetails => string.Join(", ", new[] { Admin1, Country }
+        .Where(value => !string.IsNullOrWhiteSpace(value))
+        .Distinct(StringComparer.CurrentCultureIgnoreCase));
+
+    [JsonIgnore]
+    public string DisplayName => string.IsNullOrWhiteSpace(LocationDetails)
+        ? Name
+        : $"{Name}, {LocationDetails}";
 }
 
 internal sealed class ForecastResponse

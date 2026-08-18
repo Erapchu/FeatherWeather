@@ -23,11 +23,26 @@ internal sealed class WeatherService : IDisposable
         return (place, forecast);
     }
 
-    private async Task<GeoResult> FindCityAsync(string city, CancellationToken cancellationToken)
+    public async Task<(GeoResult Place, ForecastResponse Forecast)> GetWeatherAsync(
+        GeoResult place,
+        CancellationToken cancellationToken)
     {
+        ForecastResponse forecast = await GetForecastAsync(place, cancellationToken).ConfigureAwait(false);
+        return (place, forecast);
+    }
+
+    public async Task<IReadOnlyList<GeoResult>> SearchCitiesAsync(
+        string query,
+        int count,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+            return [];
+
+        count = Math.Clamp(count, 1, 20);
         string url = "https://geocoding-api.open-meteo.com/v1/search?name=" +
-                     Uri.EscapeDataString(city) +
-                     $"&count=1&language={GetGeocodingLanguage()}&format=json";
+                     Uri.EscapeDataString(query.Trim()) +
+                     $"&count={count}&language={GetGeocodingLanguage()}&format=json";
 
         await using Stream stream = await _http.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
         GeocodingResponse? response = await JsonSerializer.DeserializeAsync(
@@ -35,7 +50,13 @@ internal sealed class WeatherService : IDisposable
             WeatherJsonContext.Default.GeocodingResponse,
             cancellationToken).ConfigureAwait(false);
 
-        return response?.Results?.FirstOrDefault()
+        return response?.Results ?? [];
+    }
+
+    private async Task<GeoResult> FindCityAsync(string city, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<GeoResult> results = await SearchCitiesAsync(city, 1, cancellationToken).ConfigureAwait(false);
+        return results.FirstOrDefault()
                ?? throw new InvalidOperationException(Strings.CityNotFound);
     }
 

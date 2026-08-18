@@ -4,6 +4,8 @@ using FeatherWeather.Models;
 using FeatherWeather.Resources;
 using FeatherWeather.Services;
 using System.Globalization;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace FeatherWeather.ViewModels;
 
@@ -13,7 +15,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly WeatherService weatherService;
     private readonly SettingsService settingsService;
     private CancellationTokenSource? _refreshCts;
+    private CancellationTokenSource? _citySearchCts;
     private ForecastSnapshot? _lastForecast;
+    private GeoResult? _selectedPlace;
+    private bool _isApplyingSuggestion;
     private bool _initialized;
 
     public MainViewModel(
@@ -24,7 +29,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         this.weatherCache = weatherCache;
         this.weatherService = weatherService;
         this.settingsService = settingsService;
-        City = string.IsNullOrWhiteSpace(settingsService.City)
+        _city = string.IsNullOrWhiteSpace(settingsService.City)
             ? Strings.DefaultCity
             : settingsService.City;
         LocalizationManager.Instance.CultureChanged += OnCultureChanged;
@@ -32,6 +37,15 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private string _city = Strings.DefaultCity;
+
+    [ObservableProperty]
+    public partial IReadOnlyList<GeoResult> CitySuggestions { get; set; } = [];
+
+    [ObservableProperty]
+    public partial GeoResult? SelectedCitySuggestion { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsCitySuggestionsOpen { get; set; }
 
     [ObservableProperty]
     public partial string DisplayCity { get; set; } = Strings.DefaultDisplayCity;
@@ -105,6 +119,79 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     internal void CancelPendingRefresh() => _refreshCts?.Cancel();
 
+    partial void OnCityChanged(string value)
+    {
+        if (_isApplyingSuggestion)
+            return;
+
+        _selectedPlace = null;
+        SelectedCitySuggestion = null;
+        QueueCitySearch(value);
+    }
+
+    partial void OnSelectedCitySuggestionChanged(GeoResult? value)
+    {
+        if (value is null)
+            return;
+
+        _citySearchCts?.Cancel();
+        _selectedPlace = value;
+        _isApplyingSuggestion = true;
+        City = value.Name;
+        _isApplyingSuggestion = false;
+        CitySuggestions = [];
+        IsCitySuggestionsOpen = false;
+        _ = RefreshCoreAsync(showLoadingText: true);
+    }
+
+    private void QueueCitySearch(string query)
+    {
+        _citySearchCts?.Cancel();
+        _citySearchCts?.Dispose();
+        _citySearchCts = null;
+
+        query = query.Trim();
+        if (query.Length < 2)
+        {
+            CitySuggestions = [];
+            IsCitySuggestionsOpen = false;
+            return;
+        }
+
+        _citySearchCts = new CancellationTokenSource();
+        _ = SearchCitySuggestionsAsync(query, _citySearchCts.Token);
+    }
+
+    private async Task SearchCitySuggestionsAsync(string query, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(300, cancellationToken);
+            IReadOnlyList<GeoResult> suggestions =
+                await weatherService.SearchCitiesAsync(query, 8, cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested ||
+                !string.Equals(query, City.Trim(), StringComparison.CurrentCultureIgnoreCase))
+                return;
+
+            CitySuggestions = suggestions;
+            IsCitySuggestionsOpen = suggestions.Count > 0;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (HttpRequestException)
+        {
+            CitySuggestions = [];
+            IsCitySuggestionsOpen = false;
+        }
+        catch (JsonException)
+        {
+            CitySuggestions = [];
+            IsCitySuggestionsOpen = false;
+        }
+    }
+
     private async Task RefreshCoreAsync(bool showLoadingText)
     {
         string city = City.Trim();
@@ -121,7 +208,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            var (place, forecast) = await weatherService.GetWeatherAsync(city, cancellationToken);
+            GeoResult? selectedPlace = _selectedPlace;
+            var (place, forecast) = selectedPlace is not null &&
+                                    string.Equals(selectedPlace.Name, city, StringComparison.CurrentCultureIgnoreCase)
+                ? await weatherService.GetWeatherAsync(selectedPlace, cancellationToken)
+                : await weatherService.GetWeatherAsync(city, cancellationToken);
             DateTimeOffset now = DateTimeOffset.Now;
 
             ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
@@ -277,6 +368,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
+        _citySearchCts?.Cancel();
+        _citySearchCts?.Dispose();
     }
 
     private sealed record ForecastSnapshot(

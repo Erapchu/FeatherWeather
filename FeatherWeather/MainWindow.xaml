@@ -4,6 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:resources="clr-namespace:FeatherWeather.Resources"
         xmlns:viewModels="clr-namespace:FeatherWeather.ViewModels"
+        xmlns:controls="clr-namespace:FeatherWeather.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
@@ -88,11 +89,15 @@
                                 <TextBlock Text="{Binding UpdatedText}" Margin="0,4,0,0" Opacity="0.68" />
                             </StackPanel>
 
-                            <TextBox 
+                            <controls:AutoSuggestBox
                                 Grid.Column="1"
                                 Height="36"
-                                VerticalContentAlignment="Center"
                                 Text="{Binding City, UpdateSourceTrigger=PropertyChanged}"
+                                ItemsSource="{Binding CitySuggestions}"
+                                SelectedItem="{Binding SelectedCitySuggestion}"
+                                IsSuggestionListOpen="{Binding IsCitySuggestionsOpen}"
+                                DisplayMemberPath="DisplayName"
+                                TextMemberPath="Name"
                                 ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[CityInputToolTip]}" />
                             <Button 
                                 Grid.Column="3"
