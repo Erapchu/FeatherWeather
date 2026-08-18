@@ -32,6 +32,7 @@
   <data name="LanguageDutch" xml:space="preserve"><value>Nederlands</value></data>
   <data name="LanguagePolish" xml:space="preserve"><value>Polski</value></data>
   <data name="LanguageUkrainian" xml:space="preserve"><value>Українська</value></data>
+  <data name="LanguageArabic" xml:space="preserve"><value>العربية</value></data>
   <data name="DefaultCity" xml:space="preserve"><value>London</value></data>
   <data name="DefaultDisplayCity" xml:space="preserve"><value>Weather</value></data>
   <data name="Loading" xml:space="preserve"><value>Loading…</value></data>

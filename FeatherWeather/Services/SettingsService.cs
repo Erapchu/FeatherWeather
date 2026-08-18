@@ -10,7 +10,7 @@ public sealed class SettingsService
 
     private static readonly HashSet<string> SupportedLanguages =
     [
-        "en", "ru", "de", "fr", "es", "it", "pt", "nl", "pl", "uk"
+        "en", "ru", "de", "fr", "es", "it", "pt", "nl", "pl", "uk", "ar"
     ];
 
     private AppSettings _settings = new();

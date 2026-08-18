@@ -196,6 +196,15 @@ namespace FeatherWeather.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to العربية.
+        /// </summary>
+        public static string LanguageArabic {
+            get {
+                return ResourceManager.GetString("LanguageArabic", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Choose the application language..
         /// </summary>
         public static string LanguageDescription {

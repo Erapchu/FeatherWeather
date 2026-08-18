@@ -18,7 +18,8 @@ public sealed partial class SettingsViewModel(SettingsService settingsService) :
         new("pt", Strings.LanguagePortuguese),
         new("nl", Strings.LanguageDutch),
         new("pl", Strings.LanguagePolish),
-        new("uk", Strings.LanguageUkrainian)
+        new("uk", Strings.LanguageUkrainian),
+        new("ar", Strings.LanguageArabic)
     ];
 
     [ObservableProperty]

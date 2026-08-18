@@ -8,6 +8,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type={x:Type viewModels:MainViewModel}, IsDesignTimeCreatable=False}"
+        FlowDirection="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=FlowDirection}"
         Title="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[AppTitle]}"
         Width="760" Height="610"
         MinWidth="620" MinHeight="520"

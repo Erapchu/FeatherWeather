@@ -61,7 +61,7 @@ internal sealed class WeatherService : IDisposable
     private static string GetGeocodingLanguage()
     {
         string language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-        return language is "en" or "ru" or "de" or "fr" or "es" or "it" or "pt" or "nl" or "pl" or "uk"
+        return language is "en" or "ru" or "de" or "fr" or "es" or "it" or "pt" or "nl" or "pl" or "uk" or "ar"
             ? language
             : "en";
     }
