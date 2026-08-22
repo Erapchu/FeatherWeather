@@ -16,6 +16,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
       - name: Ensure master branch
         shell: pwsh
         run: |
@@ -23,11 +28,6 @@ jobs:
               Write-Error "Releases can only be created from master."
               exit 1
           }
-
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v6.0.0
