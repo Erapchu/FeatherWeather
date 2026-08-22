@@ -12,6 +12,14 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Ensure master branch
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -ne "refs/heads/master") {
+              Write-Error "Releases can only be created from master."
+              exit 1
+          }
+
       - name: Checkout
         uses: actions/checkout@v7.0.1
         with:
