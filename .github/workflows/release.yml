@@ -32,7 +32,7 @@ jobs:
 
       - name: NBGV
         id: nbgv
-        uses: dotnet/nbgv@master
+        uses: dotnet/nbgv@v0.5.2
 
       - name: Export version
         shell: pwsh
