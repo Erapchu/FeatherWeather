@@ -73,7 +73,11 @@ jobs:
           }
 
       - name: Restore
-        run: dotnet restore FeatherWeather/FeatherWeather.csproj --runtime win-x64
+        run: >
+          dotnet restore FeatherWeather/FeatherWeather.csproj
+          --runtime win-x64
+          -p:Configuration=Release
+          -p:PublishReadyToRun=true
 
       - name: Publish
         run: >
