@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: NBGV
+        id: nbgv
+        uses: dotnet/nbgv@master
+
+      - name: Export version
+        shell: pwsh
+        run: |
+          $version = "${{ steps.nbgv.outputs.SimpleVersion }}"
+          $commit = "${{ steps.nbgv.outputs.GitCommitId }}"
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+              throw "NBGV did not produce SimpleVersion."
+          }
+
+          "git_build_version_simple=$version" >> $env:GITHUB_ENV
+          "git_commit_id=$commit" >> $env:GITHUB_ENV
+
+      - name: Show version
+        shell: pwsh
+        run: |
+          Write-Host "Version: $env:git_build_version_simple"
+          Write-Host "Commit:  $env:git_commit_id"
+
+      - name: Check tag
+        shell: pwsh
+        run: |
+          $tag = "v$env:git_build_version_simple"
+
+          if (git tag --list $tag) {
+              Write-Error "Tag $tag already exists."
+              exit 1
+          }
+
+      - name: Restore
+        run: dotnet restore FeatherWeather/FeatherWeather.csproj --runtime win-x64
+
+      - name: Publish
+        run: >
+          dotnet publish FeatherWeather/FeatherWeather.csproj
+          --configuration Release
+          --runtime win-x64
+          --no-restore
+          --self-contained false
+          -p:UseAppHost=true
+          -p:PublishReadyToRun=true
+          -p:PublishSingleFile=false
+          --output artifacts/publish
+
+      - name: Create archive
+        shell: pwsh
+        run: |
+          $version = $env:git_build_version_simple
+          $archive = "FeatherWeather-$version-win-x64.zip"
+
+          Compress-Archive `
+            -Path "artifacts/publish/*" `
+            -DestinationPath "artifacts/$archive"
+
+          "RELEASE_ARCHIVE=$archive" >> $env:GITHUB_ENV
+          "RELEASE_TAG=v$version" >> $env:GITHUB_ENV
+
+      - name: Create tag
+        shell: pwsh
+        run: |
+          git tag "$env:RELEASE_TAG"
+          git push origin "$env:RELEASE_TAG"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: FeatherWeather ${{ env.git_build_version_simple }}
+          generate_release_notes: true
+          files: artifacts/${{ env.RELEASE_ARCHIVE }}
