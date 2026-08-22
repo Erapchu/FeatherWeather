@@ -2,6 +2,11 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      notes:
+        description: "Release notes"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -108,3 +113,7 @@ jobs:
           name: FeatherWeather ${{ env.git_build_version_simple }}
           generate_release_notes: true
           files: artifacts/${{ env.RELEASE_ARCHIVE }}
+          body: |
+              ## Highlights
+
+              ${{ inputs.notes }}
