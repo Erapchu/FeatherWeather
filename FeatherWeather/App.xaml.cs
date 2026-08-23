@@ -4,46 +4,69 @@ using FeatherWeather.Resources;
 using FeatherWeather.ViewModels;
 using FeatherWeather.Views;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace FeatherWeather;
 
 public partial class App : Application
 {
-    private static readonly ServiceProvider _services = new ServiceCollection()
-        .AddSingleton<WeatherCache>()
-        .AddSingleton<WeatherService>()
-        .AddSingleton<SettingsService>()
-        .AddSingleton<MainViewModel>()
-        .AddSingleton<SettingsViewModel>()
-        .AddSingleton<SettingsView>()
-        .AddSingleton(sp => new Lazy<SettingsView>(sp.GetRequiredService<SettingsView>))
-        .AddSingleton<MainWindow>()
-        .BuildServiceProvider(
-            new ServiceProviderOptions
-            {
-                ValidateOnBuild = true,
-                ValidateScopes = true
-            });
+    private ServiceProvider? _services;
+    private SettingsService? _settingsService;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        SettingsService settingsService = _services.GetRequiredService<SettingsService>();
-        settingsService.Initialize();
-        settingsService.ThemeChanged += OnThemeChanged;
-        ApplyTheme(settingsService.Theme);
-        LocalizationManager.Instance.Initialize(settingsService);
-
-        MainWindow window = _services.GetRequiredService<MainWindow>();
+        var window = new MainWindow();
         MainWindow = window;
+        window.ContentRendered += OnInitialContentRendered;
         window.Show();
     }
 
+    private async void OnInitialContentRendered(object? sender, EventArgs e)
+    {
+        var window = (MainWindow)sender!;
+        window.ContentRendered -= OnInitialContentRendered;
+
+        // Let the first, lightweight frame reach the compositor before doing any startup work.
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+
+        _services = BuildServices();
+        _settingsService = _services.GetRequiredService<SettingsService>();
+        _settingsService.Initialize();
+        _settingsService.ThemeChanged += OnThemeChanged;
+        ApplyTheme(_settingsService.Theme);
+        LocalizationManager.Instance.Initialize(_settingsService);
+
+        MainViewModel viewModel = _services.GetRequiredService<MainViewModel>();
+        MainView mainView = _services.GetRequiredService<MainView>();
+        window.ShowMainContent(mainView);
+        await viewModel.InitializeAsync();
+    }
+
+    private static ServiceProvider BuildServices() =>
+        new ServiceCollection()
+            .AddSingleton<WeatherCache>()
+            .AddSingleton<WeatherService>()
+            .AddSingleton<SettingsService>()
+            .AddSingleton<MainViewModel>()
+            .AddSingleton<SettingsViewModel>()
+            .AddSingleton<SettingsView>()
+            .AddSingleton(sp => new Lazy<SettingsView>(sp.GetRequiredService<SettingsView>))
+            .AddSingleton<MainView>()
+            .BuildServiceProvider(
+                new ServiceProviderOptions
+                {
+                    ValidateOnBuild = true,
+                    ValidateScopes = true
+                });
+
     protected override void OnExit(ExitEventArgs e)
     {
-        _services.GetRequiredService<SettingsService>().ThemeChanged -= OnThemeChanged;
-        _services.Dispose();
+        if (_settingsService is not null)
+            _settingsService.ThemeChanged -= OnThemeChanged;
+
+        _services?.Dispose();
         base.OnExit(e);
     }
 

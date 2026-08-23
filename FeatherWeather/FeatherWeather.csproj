@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\FeatherWeather.ico" />
+    <Resource Include="Assets\FeatherWeather_Medium.png" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,25 +1,19 @@
-using System.ComponentModel;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Shell;
 using FeatherWeather.Services;
-using FeatherWeather.ViewModels;
 using FeatherWeather.Views;
 
 namespace FeatherWeather;
 
 internal partial class MainWindow : Window
 {
-    private readonly MainViewModel _viewModel;
-    private readonly Lazy<SettingsView> _settingsView;
+    private static readonly Duration ContentTransitionDuration =
+        new(TimeSpan.FromMilliseconds(180));
 
-    public MainWindow(MainViewModel viewModel, Lazy<SettingsView> settingsView)
+    public MainWindow()
     {
         InitializeComponent();
-
-        _viewModel = viewModel;
-        _settingsView = settingsView;
-        DataContext = viewModel;
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         SingleInstanceNotifier.RegisterWindow(this);
 
@@ -46,29 +40,34 @@ internal partial class MainWindow : Window
                           NonClientFrameEdges.Bottom
                         : NonClientFrameEdges.None
             });
-
-        ContentRendered += OnContentRendered;
-        Closed += OnClosed;
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    public void ShowMainContent(MainView mainView)
     {
-        if (e.PropertyName == nameof(MainViewModel.IsSettingsVisible) &&
-            _viewModel.IsSettingsVisible &&
-            SecondaryContent.Content is null)
+        MainContent.Content = mainView;
+        MainContent.Opacity = 1;
+        StartupLogo.Opacity = 0;
+
+        var easing = new QuadraticEase { EasingMode = EasingMode.EaseOut };
+        var fadeIn = new DoubleAnimation(0, 1, ContentTransitionDuration)
         {
-            SecondaryContent.Content = _settingsView.Value;
-        }
-    }
+            EasingFunction = easing,
+            FillBehavior = FillBehavior.Stop
+        };
+        var fadeOut = new DoubleAnimation(1, 0, ContentTransitionDuration)
+        {
+            EasingFunction = easing,
+            FillBehavior = FillBehavior.Stop
+        };
 
-    private void OnClosed(object? sender, EventArgs e)
-    {
-        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        _viewModel.CancelPendingRefresh();
-    }
+        fadeOut.Completed += (_, _) =>
+        {
+            StartupLogo.Visibility = Visibility.Collapsed;
+            StartupLogo.BeginAnimation(OpacityProperty, null);
+            StartupLogo.Opacity = 1;
+        };
 
-    private async void OnContentRendered(object? sender, EventArgs e)
-    {
-        await _viewModel.InitializeAsync();
+        MainContent.BeginAnimation(OpacityProperty, fadeIn);
+        StartupLogo.BeginAnimation(OpacityProperty, fadeOut);
     }
 }
