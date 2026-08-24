@@ -17,6 +17,13 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Visual preferences must be known before the first window frame is rendered.
+        _settingsService = new SettingsService();
+        _settingsService.Initialize();
+        _settingsService.ThemeChanged += OnThemeChanged;
+        ApplyTheme(_settingsService.Theme);
+        LocalizationManager.Instance.Initialize(_settingsService);
+
         var window = new MainWindow();
         MainWindow = window;
         window.ContentRendered += OnInitialContentRendered;
@@ -31,12 +38,7 @@ public partial class App : Application
         // Let the first, lightweight frame reach the compositor before doing any startup work.
         await Dispatcher.Yield(DispatcherPriority.ContextIdle);
 
-        _services = BuildServices();
-        _settingsService = _services.GetRequiredService<SettingsService>();
-        _settingsService.Initialize();
-        _settingsService.ThemeChanged += OnThemeChanged;
-        ApplyTheme(_settingsService.Theme);
-        LocalizationManager.Instance.Initialize(_settingsService);
+        _services = BuildServices(_settingsService!);
 
         MainViewModel viewModel = _services.GetRequiredService<MainViewModel>();
         MainView mainView = _services.GetRequiredService<MainView>();
@@ -44,11 +46,11 @@ public partial class App : Application
         await viewModel.InitializeAsync();
     }
 
-    private static ServiceProvider BuildServices() =>
+    private static ServiceProvider BuildServices(SettingsService settingsService) =>
         new ServiceCollection()
             .AddSingleton<WeatherCache>()
             .AddSingleton<WeatherService>()
-            .AddSingleton<SettingsService>()
+            .AddSingleton(settingsService)
             .AddSingleton<MainViewModel>()
             .AddSingleton<SettingsViewModel>()
             .AddSingleton<SettingsView>()
@@ -63,8 +65,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        if (_settingsService is not null)
-            _settingsService.ThemeChanged -= OnThemeChanged;
+        _settingsService?.ThemeChanged -= OnThemeChanged;
 
         _services?.Dispose();
         base.OnExit(e);
