@@ -21,22 +21,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private bool _isApplyingSuggestion;
     private bool _initialized;
 
-    public MainViewModel(
-        WeatherCache weatherCache,
-        WeatherService weatherService,
-        SettingsService settingsService)
-    {
-        this.weatherCache = weatherCache;
-        this.weatherService = weatherService;
-        this.settingsService = settingsService;
-        _city = string.IsNullOrWhiteSpace(settingsService.City)
-            ? Strings.DefaultCity
-            : settingsService.City;
-        LocalizationManager.Instance.CultureChanged += OnCultureChanged;
-    }
-
     [ObservableProperty]
-    private string _city = Strings.DefaultCity;
+    public partial string City { get; set; } = Strings.DefaultCity;
 
     [ObservableProperty]
     public partial IReadOnlyList<GeoResult> CitySuggestions { get; set; } = [];
@@ -84,7 +70,21 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     public partial IReadOnlyList<DayItem> DailyItems { get; set; } = [];
 
     [ObservableProperty]
-    private bool _isSettingsVisible;
+    public partial bool IsSettingsVisible { get; set; }
+
+    public MainViewModel(
+        WeatherCache weatherCache,
+        WeatherService weatherService,
+        SettingsService settingsService)
+    {
+        this.weatherCache = weatherCache;
+        this.weatherService = weatherService;
+        this.settingsService = settingsService;
+        City = string.IsNullOrWhiteSpace(settingsService.City)
+            ? Strings.DefaultCity
+            : settingsService.City;
+        LocalizationManager.Instance.CultureChanged += OnCultureChanged;
+    }
 
     public async Task InitializeAsync()
     {

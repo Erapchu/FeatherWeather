@@ -2,6 +2,9 @@
 
 Feather Weather is a small, lightweight weather app for Windows built with WPF. It is designed for fast startup and a low memory footprint without sacrificing the essentials of a desktop forecast.
 
+## Screenshots
+![Alt text](images/app.png "App")
+
 ## Features
 
 - Search for weather by city name
