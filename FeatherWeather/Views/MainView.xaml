@@ -84,10 +84,10 @@
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
     </UserControl.Resources>
-    <Grid RowDefinitions="44 *">
-        <Grid Grid.Row="0">
+    <Grid RowDefinitions="50 *">
+        <Grid Grid.Row="0" ColumnDefinitions="180 * 150">
             <StackPanel
-                Margin="22,0,150,0"
+                Margin="22,0,0,0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal">
                 <Image
@@ -103,6 +103,24 @@
                     FontSize="12"
                     Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[AppTitle]}"/>
             </StackPanel>
+            <Grid Grid.Column="1" Margin="12,0" MaxWidth="600"
+                  VerticalAlignment="Center"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                  xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+                <Grid.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding RefreshCommand}" />
+                </Grid.InputBindings>
+                <controls:AutoSuggestBox
+                    Height="36"
+                    Text="{Binding City, UpdateSourceTrigger=PropertyChanged}"
+                    ItemsSource="{Binding CitySuggestions}"
+                    SelectedItem="{Binding SelectedCitySuggestion}"
+                    IsSuggestionListOpen="{Binding IsCitySuggestionsOpen}"
+                    DisplayMemberPath="DisplayName"
+                    TextMemberPath="Name"
+                    PlaceholderText="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[CityInputToolTip]}"
+                    ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[CityInputToolTip]}" />
+            </Grid>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -179,7 +197,6 @@
                         <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="260" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
@@ -189,23 +206,12 @@
                                 <TextBlock Text="{Binding UpdatedText}" Margin="0,4,0,0" Opacity="0.68" />
                             </StackPanel>
 
-                            <controls:AutoSuggestBox
-                                Grid.Column="1"
-                                Height="36"
-                                Text="{Binding City, UpdateSourceTrigger=PropertyChanged}"
-                                ItemsSource="{Binding CitySuggestions}"
-                                SelectedItem="{Binding SelectedCitySuggestion}"
-                                IsSuggestionListOpen="{Binding IsCitySuggestionsOpen}"
-                                DisplayMemberPath="DisplayName"
-                                TextMemberPath="Name"
-                                ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[CityInputToolTip]}" />
                             <Button 
-                                Grid.Column="3"
+                                Grid.Column="2"
                                 Width="42"
                                 Height="36"
                                 ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[RefreshWeatherToolTip]}"
-                                Command="{Binding RefreshCommand}"
-                                IsDefault="True">
+                                Command="{Binding RefreshCommand}">
                                 <TextBlock
                                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                                     FontSize="16"

@@ -10,7 +10,26 @@
                  Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
                  VerticalContentAlignment="Center"
                  Text="{Binding ElementName=Root, Path=Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{Binding ElementName=Root, Path=PlaceholderText}"
                  ToolTip="{Binding ElementName=Root, Path=ToolTip}" />
+
+        <TextBlock Margin="12,0"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                   Text="{Binding ElementName=Root, Path=PlaceholderText}"
+                   TextTrimming="CharacterEllipsis"
+                   IsHitTestVisible="False">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ElementName=InputBox, Path=Text}" Value="">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
 
         <Popup x:Name="SuggestionsPopup"
                AllowsTransparency="True"

@@ -8,6 +8,9 @@ namespace FeatherWeather.Controls;
 
 public partial class AutoSuggestBox : UserControl
 {
+    public static readonly DependencyProperty PlaceholderTextProperty = DependencyProperty.Register(
+        nameof(PlaceholderText), typeof(string), typeof(AutoSuggestBox), new PropertyMetadata(string.Empty));
+
     public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
         nameof(Text), typeof(string), typeof(AutoSuggestBox),
         new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
@@ -44,6 +47,12 @@ public partial class AutoSuggestBox : UserControl
     {
         get => (string)GetValue(TextProperty);
         set => SetValue(TextProperty, value);
+    }
+
+    public string PlaceholderText
+    {
+        get => (string)GetValue(PlaceholderTextProperty);
+        set => SetValue(PlaceholderTextProperty, value);
     }
 
     public IEnumerable? ItemsSource

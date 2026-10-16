@@ -18,11 +18,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _citySearchCts;
     private ForecastSnapshot? _lastForecast;
     private GeoResult? _selectedPlace;
+    private GeoResult? _currentPlace;
+    private string _currentCity;
     private bool _isApplyingSuggestion;
     private bool _initialized;
 
     [ObservableProperty]
-    public partial string City { get; set; } = Strings.DefaultCity;
+    public partial string City { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial IReadOnlyList<GeoResult> CitySuggestions { get; set; } = [];
@@ -80,7 +82,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         this.weatherCache = weatherCache;
         this.weatherService = weatherService;
         this.settingsService = settingsService;
-        City = string.IsNullOrWhiteSpace(settingsService.City)
+        _currentCity = string.IsNullOrWhiteSpace(settingsService.City)
             ? Strings.DefaultCity
             : settingsService.City;
         LocalizationManager.Instance.CultureChanged += OnCultureChanged;
@@ -98,7 +100,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             if (string.IsNullOrWhiteSpace(settingsService.City))
             {
-                City = cached.City;
+                _currentCity = cached.City;
                 settingsService.SetCity(cached.City);
             }
 
@@ -194,9 +196,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private async Task RefreshCoreAsync(bool showLoadingText)
     {
-        string city = City.Trim();
+        string query = City.Trim();
+        string city = query.Length == 0 ? _currentCity : query;
         if (city.Length < 2)
             return;
+
+        _citySearchCts?.Cancel();
+        IsCitySuggestionsOpen = false;
 
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
@@ -208,7 +214,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            GeoResult? selectedPlace = _selectedPlace;
+            GeoResult? selectedPlace = query.Length == 0 ? _currentPlace : _selectedPlace;
             var (place, forecast) = selectedPlace is not null &&
                                     string.Equals(selectedPlace.Name, city, StringComparison.CurrentCultureIgnoreCase)
                 ? await weatherService.GetWeatherAsync(selectedPlace, cancellationToken)
@@ -216,7 +222,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             DateTimeOffset now = DateTimeOffset.Now;
 
             ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
-            City = place.Name;
+            _currentCity = place.Name;
+            _currentPlace = place;
             settingsService.SetCity(place.Name);
 
             var cachedWeather = new CachedWeather
@@ -362,9 +369,6 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        if (City.Trim().Length >= 2)
-            settingsService.SetCity(City);
-
         LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
