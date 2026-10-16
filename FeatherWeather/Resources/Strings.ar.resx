@@ -54,4 +54,5 @@
   <data name="WeatherThunderstorm"><value>عاصفة رعدية</value></data>
   <data name="WeatherThunderstormWithHail"><value>عاصفة رعدية مع بَرَد</value></data>
   <data name="WeatherUnknown"><value>لا توجد بيانات</value></data>
+  <data name="RemoveSavedCityToolTip" xml:space="preserve"><value>حذف المدينة المحفوظة</value></data>
 </root>

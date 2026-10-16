@@ -13,6 +13,38 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
     <UserControl.Resources>
+        <Style x:Key="SavedCityButtonStyle" TargetType="Button">
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBackground" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBackground" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBackground" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="NavigationButtonStyle" TargetType="Button">
             <Setter Property="MinHeight" Value="72" />
             <Setter Property="Margin" Value="4,6" />
@@ -108,7 +140,7 @@
                   shell:WindowChrome.IsHitTestVisibleInChrome="True"
                   xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
                 <Grid.InputBindings>
-                    <KeyBinding Key="Enter" Command="{Binding RefreshCommand}" />
+                    <KeyBinding Key="Enter" Command="{Binding SearchCityCommand}" />
                 </Grid.InputBindings>
                 <controls:AutoSuggestBox
                     Height="36"
@@ -192,7 +224,67 @@
                     </Style>
                 </Grid.Style>
                 <ScrollViewer>
-                    <Grid Margin="28" RowDefinitions="Auto 24 Auto 18 Auto 18 Auto * Auto">
+                    <StackPanel Margin="28">
+                        <ItemsControl ItemsSource="{Binding SavedCities}">
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Margin" Value="0,0,0,18" />
+                                    <Style.Triggers>
+                                        <Trigger Property="HasItems" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,8,8" Padding="2" BorderThickness="1" CornerRadius="4">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+                                                <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource SavedCityButtonStyle}"
+                                                    ToolTip="{Binding Place.DisplayName}"
+                                                    Command="{Binding DataContext.SelectSavedCityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="{Binding Place.Name}" MaxWidth="180" TextTrimming="CharacterEllipsis">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Button>
+                                            <Button Width="40" Height="40" Padding="0" Margin="2,0,0,0"
+                                                    Style="{StaticResource SavedCityButtonStyle}"
+                                                    ToolTip="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[RemoveSavedCityToolTip]}"
+                                                    AutomationProperties.Name="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[RemoveSavedCityToolTip]}"
+                                                    Command="{Binding DataContext.RemoveSavedCityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="14" Text="&#xE711;" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    <Grid RowDefinitions="Auto 24 Auto 18 Auto 18 Auto * Auto">
 
                         <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
@@ -302,6 +394,7 @@
 
                         <TextBlock Grid.Row="8" Margin="0,14,0,0" Opacity="0.68" Text="{Binding StatusText}" />
                     </Grid>
+                    </StackPanel>
                 </ScrollViewer>
             </Grid>
 

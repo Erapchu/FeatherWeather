@@ -82,4 +82,5 @@
   <data name="WeatherGlyphRain" xml:space="preserve"><value>☔</value></data>
   <data name="WeatherGlyphSnow" xml:space="preserve"><value>❄</value></data>
   <data name="WeatherGlyphThunderstorm" xml:space="preserve"><value>ϟ</value></data>
+  <data name="RemoveSavedCityToolTip" xml:space="preserve"><value>Remove saved city</value></data>
 </root>

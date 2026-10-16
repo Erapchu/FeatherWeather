@@ -6,6 +6,7 @@ using FeatherWeather.Services;
 using System.Globalization;
 using System.Net.Http;
 using System.Text.Json;
+using System.Collections.ObjectModel;
 
 namespace FeatherWeather.ViewModels;
 
@@ -74,6 +75,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool IsSettingsVisible { get; set; }
 
+    public ObservableCollection<SavedCityItem> SavedCities { get; } = [];
+
     public MainViewModel(
         WeatherCache weatherCache,
         WeatherService weatherService,
@@ -82,9 +85,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         this.weatherCache = weatherCache;
         this.weatherService = weatherService;
         this.settingsService = settingsService;
+        _currentPlace = settingsService.CurrentPlace;
         _currentCity = string.IsNullOrWhiteSpace(settingsService.City)
             ? Strings.DefaultCity
             : settingsService.City;
+        foreach (GeoResult place in settingsService.SavedCities)
+            SavedCities.Add(new SavedCityItem(place));
+        UpdateSavedCitySelection();
         LocalizationManager.Instance.CultureChanged += OnCultureChanged;
     }
 
@@ -95,7 +102,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _initialized = true;
 
+        string startupCity = _currentCity;
+        GeoResult? startupPlace = _currentPlace;
         CachedWeather? cached = await weatherCache.TryLoadAsync();
+        if (_currentCity != startupCity || !ReferenceEquals(_currentPlace, startupPlace))
+            return;
         if (cached is not null)
         {
             if (string.IsNullOrWhiteSpace(settingsService.City))
@@ -104,20 +115,57 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
                 settingsService.SetCity(cached.City);
             }
 
-            ApplyForecast(cached.City, cached.Country, cached.Forecast, cached.SavedAt, fromCache: true);
+            if (string.Equals(cached.City, _currentCity, StringComparison.CurrentCultureIgnoreCase))
+                ApplyForecast(cached.City, cached.Country, cached.Forecast, cached.SavedAt, fromCache: true);
         }
 
         await RefreshCoreAsync(showLoadingText: false);
     }
 
     [RelayCommand(AllowConcurrentExecutions = true)]
-    private Task RefreshAsync() => RefreshCoreAsync(showLoadingText: true);
+    private Task RefreshAsync() => RefreshCoreAsync(showLoadingText: true, placeOverride: _currentPlace);
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private Task SearchCityAsync() => RefreshCoreAsync(showLoadingText: true, saveCity: true);
 
     [RelayCommand]
     private void ShowSettings() => IsSettingsVisible = true;
 
     [RelayCommand]
     private void ShowWeather() => IsSettingsVisible = false;
+
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private Task SelectSavedCityAsync(SavedCityItem city)
+    {
+        IsSettingsVisible = false;
+        City = string.Empty;
+        bool changed = _currentPlace is null || !SettingsService.IsSamePlace(_currentPlace, city.Place);
+        _currentPlace = city.Place;
+        _currentCity = city.Place.Name;
+        settingsService.SetCurrentPlace(city.Place, saveCity: false);
+        UpdateSavedCitySelection();
+        if (changed || _lastForecast is null)
+        {
+            _lastForecast = null;
+            HourlyItems = [];
+            DailyItems = [];
+            OnCultureChanged(this, EventArgs.Empty);
+        }
+        return RefreshCoreAsync(showLoadingText: true, placeOverride: city.Place);
+    }
+
+    [RelayCommand]
+    private void RemoveSavedCity(SavedCityItem city)
+    {
+        settingsService.RemoveSavedCity(city.Place);
+        SavedCities.Remove(city);
+    }
+
+    private void UpdateSavedCitySelection()
+    {
+        foreach (SavedCityItem city in SavedCities)
+            city.IsCurrent = _currentPlace is not null && SettingsService.IsSamePlace(city.Place, _currentPlace);
+    }
 
     internal void CancelPendingRefresh() => _refreshCts?.Cancel();
 
@@ -143,7 +191,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _isApplyingSuggestion = false;
         CitySuggestions = [];
         IsCitySuggestionsOpen = false;
-        _ = RefreshCoreAsync(showLoadingText: true);
+        _ = RefreshCoreAsync(showLoadingText: true, saveCity: true);
     }
 
     private void QueueCitySearch(string query)
@@ -194,9 +242,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task RefreshCoreAsync(bool showLoadingText)
+    private async Task RefreshCoreAsync(bool showLoadingText, GeoResult? placeOverride = null, bool saveCity = false)
     {
-        string query = City.Trim();
+        string query = placeOverride?.Name ?? City.Trim();
         string city = query.Length == 0 ? _currentCity : query;
         if (city.Length < 2)
             return;
@@ -210,21 +258,30 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         CancellationToken cancellationToken = _refreshCts.Token;
 
         if (showLoadingText)
+        {
             StatusText = Strings.Updating;
+            if (_lastForecast is null)
+                UpdatedText = Strings.Updating;
+        }
 
         try
         {
-            GeoResult? selectedPlace = query.Length == 0 ? _currentPlace : _selectedPlace;
+            GeoResult? selectedPlace = placeOverride ?? (query.Length == 0 ? _currentPlace : _selectedPlace);
             var (place, forecast) = selectedPlace is not null &&
                                     string.Equals(selectedPlace.Name, city, StringComparison.CurrentCultureIgnoreCase)
                 ? await weatherService.GetWeatherAsync(selectedPlace, cancellationToken)
                 : await weatherService.GetWeatherAsync(city, cancellationToken);
             DateTimeOffset now = DateTimeOffset.Now;
+            cancellationToken.ThrowIfCancellationRequested();
 
-            ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
             _currentCity = place.Name;
             _currentPlace = place;
-            settingsService.SetCity(place.Name);
+            ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
+            saveCity = saveCity && query.Length > 0;
+            settingsService.SetCurrentPlace(place, saveCity);
+            if (saveCity && !SavedCities.Any(city => SettingsService.IsSamePlace(city.Place, place)))
+                SavedCities.Add(new SavedCityItem(place));
+            UpdateSavedCitySelection();
 
             var cachedWeather = new CachedWeather
             {
@@ -242,6 +299,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             StatusText = string.Format(CultureInfo.CurrentCulture, Strings.UpdateFailedFormat, ex.Message);
+            if (_lastForecast is null)
+                UpdatedText = StatusText;
         }
     }
 
@@ -285,7 +344,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        DisplayCity = Strings.DefaultDisplayCity;
+        DisplayCity = _currentPlace is { } place
+            ? string.IsNullOrWhiteSpace(place.Country)
+                ? place.Name
+                : string.Format(CultureInfo.CurrentCulture, Strings.LocationFormat, place.Name, place.Country)
+            : Strings.DefaultDisplayCity;
         UpdatedText = Strings.Loading;
         TemperatureText = Strings.TemperaturePlaceholder;
         ConditionText = Strings.FetchingForecast;
@@ -385,6 +448,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public sealed record HourItem(string Time, string Glyph, string Temperature);
     public sealed record DayItem(string Day, string Glyph, string Condition, string Range);
+
+    public sealed partial class SavedCityItem(GeoResult place) : ObservableObject
+    {
+        public GeoResult Place { get; } = place;
+
+        [ObservableProperty]
+        public partial bool IsCurrent { get; set; }
+    }
 }
 
 internal static class WeatherCode

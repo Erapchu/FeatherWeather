@@ -21,6 +21,8 @@ public sealed class SettingsService
 
     public string Language => _settings.Language;
     public string City => _settings.City;
+    public GeoResult? CurrentPlace => _settings.CurrentPlace;
+    public IReadOnlyList<GeoResult> SavedCities => _settings.SavedCities;
     public string Theme => _settings.Theme;
 
     public void Initialize()
@@ -30,6 +32,12 @@ public sealed class SettingsService
         {
             Language = NormalizeLanguage(loadedSettings?.Language ?? DefaultLanguage),
             City = loadedSettings?.City?.Trim() ?? string.Empty,
+            CurrentPlace = loadedSettings?.CurrentPlace,
+            SavedCities = (loadedSettings?.SavedCities ?? [])
+                .OfType<GeoResult>()
+                .Where(place => !string.IsNullOrWhiteSpace(place.Name))
+                .DistinctBy(place => (place.Latitude, place.Longitude))
+                .ToArray(),
             Theme = NormalizeTheme(loadedSettings?.Theme ?? DefaultTheme)
         };
     }
@@ -65,6 +73,28 @@ public sealed class SettingsService
         Save();
         ThemeChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public void SetCurrentPlace(GeoResult place, bool saveCity)
+    {
+        GeoResult[] cities = _settings.SavedCities;
+        if (saveCity && !cities.Any(city => IsSamePlace(city, place)))
+            cities = [.. cities, place];
+
+        _settings = _settings with { City = place.Name, CurrentPlace = place, SavedCities = cities };
+        Save();
+    }
+
+    public void RemoveSavedCity(GeoResult place)
+    {
+        _settings = _settings with
+        {
+            SavedCities = _settings.SavedCities.Where(city => !IsSamePlace(city, place)).ToArray()
+        };
+        Save();
+    }
+
+    internal static bool IsSamePlace(GeoResult left, GeoResult right) =>
+        left.Latitude == right.Latitude && left.Longitude == right.Longitude;
 
     private static AppSettings? LoadSettings()
     {

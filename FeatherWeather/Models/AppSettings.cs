@@ -9,6 +9,10 @@ internal sealed record AppSettings
 
     public string City { get; init; } = string.Empty;
 
+    public GeoResult? CurrentPlace { get; init; }
+
+    public GeoResult[] SavedCities { get; init; } = [];
+
     public string Theme { get; init; } = SettingsService.DefaultTheme;
 }
 
