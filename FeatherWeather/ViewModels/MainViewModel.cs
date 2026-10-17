@@ -132,6 +132,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             }
         }
 
+        UpdateSavedCityWeather();
         Task preload = Task.WhenAll(savedPlaces
             .Append(startupPlace)
             .OfType<GeoResult>()
@@ -164,6 +165,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             var snapshot = new ForecastSnapshot(place.Name, place.Country, forecast, DateTimeOffset.Now, false);
             _forecasts[key] = snapshot;
             _forecastErrors.Remove(key);
+            UpdateSavedCityWeather();
             if (_currentPlace is not null && SettingsService.IsSamePlace(_currentPlace, place))
             {
                 ShowForecast(snapshot);
@@ -261,6 +263,22 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         foreach (SavedCityItem city in SavedCities)
             city.IsCurrent = _currentPlace is not null && SettingsService.IsSamePlace(city.Place, _currentPlace);
+        UpdateSavedCityWeather();
+    }
+
+    private void UpdateSavedCityWeather()
+    {
+        foreach (SavedCityItem city in SavedCities)
+        {
+            if (_forecasts.TryGetValue((city.Place.Latitude, city.Place.Longitude), out var snapshot))
+            {
+                CurrentWeather current = snapshot.Forecast.Current;
+                city.WeatherGlyph = WeatherCode.Glyph(current.WeatherCode);
+                city.TemperatureText = string.Format(CultureInfo.CurrentCulture,
+                    Strings.TemperatureFormat, Math.Round(current.Temperature));
+                city.ConditionText = WeatherCode.Description(current.WeatherCode);
+            }
+        }
     }
 
     internal void CancelPendingRefresh() => _refreshCts?.Cancel();
@@ -442,6 +460,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void OnCultureChanged(object? sender, EventArgs e)
     {
+        UpdateSavedCityWeather();
         if (_lastForecast is { } snapshot)
         {
             ApplyForecast(
@@ -566,6 +585,15 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         [ObservableProperty]
         public partial bool IsCurrent { get; set; }
+
+        [ObservableProperty]
+        public partial string WeatherGlyph { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string TemperatureText { get; set; } = "—";
+
+        [ObservableProperty]
+        public partial string ConditionText { get; set; } = string.Empty;
     }
 }
 
