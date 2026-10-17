@@ -139,6 +139,16 @@
                   VerticalAlignment="Center"
                   shell:WindowChrome.IsHitTestVisibleInChrome="True"
                   xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSettingsVisible}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <Grid.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding SearchCityCommand}" />
                 </Grid.InputBindings>
