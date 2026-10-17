@@ -15,6 +15,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly WeatherCache weatherCache;
     private readonly WeatherService weatherService;
     private readonly SettingsService settingsService;
+    private readonly Dictionary<(double Latitude, double Longitude), ForecastSnapshot> _forecasts = [];
+    private readonly Dictionary<(double Latitude, double Longitude), Exception> _forecastErrors = [];
+    private readonly HashSet<(double Latitude, double Longitude)> _removedDuringPreload = [];
+    private readonly CancellationTokenSource _lifetimeCts = new();
     private CancellationTokenSource? _refreshCts;
     private CancellationTokenSource? _citySearchCts;
     private ForecastSnapshot? _lastForecast;
@@ -23,6 +27,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private string _currentCity;
     private bool _isApplyingSuggestion;
     private bool _initialized;
+    private bool _preloadCompleted;
 
     [ObservableProperty]
     public partial string City { get; set; } = string.Empty;
@@ -104,10 +109,10 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         string startupCity = _currentCity;
         GeoResult? startupPlace = _currentPlace;
+        GeoResult[] savedPlaces = SavedCities.Select(city => city.Place).ToArray();
         CachedWeather? cached = await weatherCache.TryLoadAsync();
-        if (_currentCity != startupCity || !ReferenceEquals(_currentPlace, startupPlace))
-            return;
-        if (cached is not null)
+        bool startupSelectionUnchanged = _currentCity == startupCity && ReferenceEquals(_currentPlace, startupPlace);
+        if (cached is not null && startupSelectionUnchanged)
         {
             if (string.IsNullOrWhiteSpace(settingsService.City))
             {
@@ -116,10 +121,74 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             }
 
             if (string.Equals(cached.City, _currentCity, StringComparison.CurrentCultureIgnoreCase))
-                ApplyForecast(cached.City, cached.Country, cached.Forecast, cached.SavedAt, fromCache: true);
+            {
+                if (startupPlace is not null)
+                    _forecasts.TryAdd((startupPlace.Latitude, startupPlace.Longitude),
+                        new ForecastSnapshot(cached.City, cached.Country, cached.Forecast, cached.SavedAt, true));
+                if (startupPlace is not null && _forecasts.TryGetValue((startupPlace.Latitude, startupPlace.Longitude), out var snapshot))
+                    ShowForecast(snapshot);
+                else
+                    ApplyForecast(cached.City, cached.Country, cached.Forecast, cached.SavedAt, fromCache: true);
+            }
         }
 
-        await RefreshCoreAsync(showLoadingText: false);
+        Task preload = Task.WhenAll(savedPlaces
+            .Append(startupPlace)
+            .OfType<GeoResult>()
+            .DistinctBy(place => (place.Latitude, place.Longitude))
+            .Select(PreloadForecastAsync));
+        if (startupPlace is null && startupSelectionUnchanged)
+            await RefreshCoreAsync(showLoadingText: false);
+        await preload;
+        _preloadCompleted = true;
+        _removedDuringPreload.Clear();
+    }
+
+    private async Task PreloadForecastAsync(GeoResult place)
+    {
+        var key = (place.Latitude, place.Longitude);
+        if (_removedDuringPreload.Contains(key))
+            return;
+        DateTimeOffset startedAt = DateTimeOffset.Now;
+        CancellationToken cancellationToken = _lifetimeCts.Token;
+        try
+        {
+            var (_, forecast) = await weatherService.GetWeatherAsync(place, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_removedDuringPreload.Contains(key))
+                return;
+            // A manual refresh may have completed while startup was loading this city.
+            if (_forecasts.TryGetValue(key, out var existing) && !existing.FromCache && existing.UpdatedAt >= startedAt)
+                return;
+
+            var snapshot = new ForecastSnapshot(place.Name, place.Country, forecast, DateTimeOffset.Now, false);
+            _forecasts[key] = snapshot;
+            _forecastErrors.Remove(key);
+            if (_currentPlace is not null && SettingsService.IsSamePlace(_currentPlace, place))
+            {
+                ShowForecast(snapshot);
+                await weatherCache.SaveAsync(new CachedWeather
+                {
+                    City = snapshot.City,
+                    Country = snapshot.Country,
+                    SavedAt = snapshot.UpdatedAt,
+                    Forecast = snapshot.Forecast
+                }, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            if (_removedDuringPreload.Contains(key))
+                return;
+            if (_forecasts.TryGetValue(key, out var existing) && !existing.FromCache)
+                return;
+            _forecastErrors[key] = ex;
+            if (_currentPlace is not null && SettingsService.IsSamePlace(_currentPlace, place))
+                ShowForecastError(ex);
+        }
     }
 
     [RelayCommand(AllowConcurrentExecutions = true)]
@@ -137,21 +206,26 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand(AllowConcurrentExecutions = true)]
     private Task SelectSavedCityAsync(SavedCityItem city)
     {
+        _refreshCts?.Cancel();
         IsSettingsVisible = false;
         City = string.Empty;
-        bool changed = _currentPlace is null || !SettingsService.IsSamePlace(_currentPlace, city.Place);
         _currentPlace = city.Place;
         _currentCity = city.Place.Name;
         settingsService.SetCurrentPlace(city.Place, saveCity: false);
         UpdateSavedCitySelection();
-        if (changed || _lastForecast is null)
+        var key = (city.Place.Latitude, city.Place.Longitude);
+        if (_forecasts.TryGetValue(key, out var snapshot))
+            ShowForecast(snapshot);
+        else
         {
             _lastForecast = null;
             HourlyItems = [];
             DailyItems = [];
             OnCultureChanged(this, EventArgs.Empty);
         }
-        return RefreshCoreAsync(showLoadingText: true, placeOverride: city.Place);
+        if (_forecastErrors.TryGetValue(key, out var error))
+            ShowForecastError(error);
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -159,6 +233,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         settingsService.RemoveSavedCity(city.Place);
         SavedCities.Remove(city);
+        var key = (city.Place.Latitude, city.Place.Longitude);
+        _forecasts.Remove(key);
+        _forecastErrors.Remove(key);
+        if (!_preloadCompleted)
+            _removedDuringPreload.Add(key);
+        if (_currentPlace is not null && SettingsService.IsSamePlace(_currentPlace, city.Place))
+            _refreshCts?.Cancel();
     }
 
     private void UpdateSavedCitySelection()
@@ -276,6 +357,9 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
             _currentCity = place.Name;
             _currentPlace = place;
+            _forecasts[(place.Latitude, place.Longitude)] =
+                new ForecastSnapshot(place.Name, place.Country, forecast, now, false);
+            _forecastErrors.Remove((place.Latitude, place.Longitude));
             ApplyForecast(place.Name, place.Country, forecast, now, fromCache: false);
             saveCity = saveCity && query.Length > 0;
             settingsService.SetCurrentPlace(place, saveCity);
@@ -298,10 +382,19 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            StatusText = string.Format(CultureInfo.CurrentCulture, Strings.UpdateFailedFormat, ex.Message);
-            if (_lastForecast is null)
-                UpdatedText = StatusText;
+            if (!cancellationToken.IsCancellationRequested)
+                ShowForecastError(ex);
         }
+    }
+
+    private void ShowForecast(ForecastSnapshot snapshot) =>
+        ApplyForecast(snapshot.City, snapshot.Country, snapshot.Forecast, snapshot.UpdatedAt, snapshot.FromCache);
+
+    private void ShowForecastError(Exception error)
+    {
+        StatusText = string.Format(CultureInfo.CurrentCulture, Strings.UpdateFailedFormat, error.Message);
+        if (_lastForecast is null)
+            UpdatedText = StatusText;
     }
 
     private void ApplyForecast(
@@ -433,6 +526,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         LocalizationManager.Instance.CultureChanged -= OnCultureChanged;
+        _lifetimeCts.Cancel();
+        _lifetimeCts.Dispose();
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
         _citySearchCts?.Cancel();

@@ -15,6 +15,7 @@ Feather Weather is a small, lightweight weather app for Windows built with WPF. 
 - System, light, and dark theme options
 - Settings and weather views with lightweight navigation
 - Immediate display of the last successful forecast from a local cache
+- Startup loading of saved cities into memory for instant switching without new requests
 - Manual refresh with request cancellation
 - Single-instance behavior that activates the existing window when the app is launched again
 
@@ -73,9 +74,9 @@ weather.json    Last successful forecast
 settings.json   Persisted language selection
 ```
 
-On startup, settings and localization are initialized before the main window is shown. The cached forecast is then loaded and displayed when available, while a fresh request runs in the background. Cache and settings I/O is best-effort, so missing or invalid files do not prevent the application from running.
+On startup, settings and localization are initialized before the main window is shown. The cached forecast is then loaded and displayed when available. Forecasts for the current city and all saved cities are fetched once and kept in memory, keyed by coordinates. Switching saved cities displays the in-memory forecast without making another request or showing an updating status. If a city's initial request is still pending, its forecast appears when that request completes; failed requests can be retried with manual refresh. Cache and settings I/O is best-effort, so missing or invalid files do not prevent the application from running.
 
-There are no background polling timers. Weather data is requested only at startup or when the user refreshes it.
+There are no background polling timers. Weather data is requested at startup, when adding a city through search, or when the user refreshes it. Manual refresh also replaces that city's in-memory forecast.
 
 ## Performance choices
 
