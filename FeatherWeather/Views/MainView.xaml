@@ -46,10 +46,11 @@
             </Setter>
         </Style>
         <Style x:Key="NavigationButtonStyle" TargetType="Button">
-            <Setter Property="MinHeight" Value="72" />
+            <Setter Property="Width" Value="65" />
+            <Setter Property="MinHeight" Value="65" />
             <Setter Property="Margin" Value="4,6" />
-            <Setter Property="Padding" Value="6,12" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="5,11" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="Transparent" />
@@ -110,8 +111,8 @@
             </Setter>
         </Style>
         <Style x:Key="NavigationLabelStyle" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,8,0,0" />
-            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Margin" Value="0,7,0,0" />
+            <Setter Property="FontSize" Value="9" />
             <Setter Property="TextAlignment" Value="Center" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
@@ -193,8 +194,18 @@
                             </Style>
                         </Button.Style>
                         <StackPanel>
-                            <TextBlock HorizontalAlignment="Center" FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE706;" FontSize="22" />
-                            <TextBlock Style="{StaticResource NavigationLabelStyle}" Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[NavigationWeatherToolTip]}" />
+                            <TextBlock HorizontalAlignment="Center" FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE706;" FontSize="20" />
+                            <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[NavigationWeatherToolTip]}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource NavigationLabelStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSettingsVisible}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Button>
 
@@ -215,8 +226,18 @@
                             </Style>
                         </Button.Style>
                         <StackPanel>
-                            <TextBlock HorizontalAlignment="Center" FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE713;" FontSize="22" />
-                            <TextBlock Style="{StaticResource NavigationLabelStyle}" Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[NavigationSettingsToolTip]}" />
+                            <TextBlock HorizontalAlignment="Center" FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE713;" FontSize="20" />
+                            <TextBlock Text="{Binding Source={x:Static resources:LocalizationManager.Instance}, Path=[NavigationSettingsToolTip]}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource NavigationLabelStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSettingsVisible}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Button>
                 </Grid>
