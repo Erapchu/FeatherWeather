@@ -104,6 +104,8 @@ internal sealed class DailyWeather
 
 internal sealed class CachedWeather
 {
+    public double Latitude { get; init; }
+    public double Longitude { get; init; }
     public string City { get; init; } = string.Empty;
     public string Country { get; init; } = string.Empty;
     public DateTimeOffset SavedAt { get; init; }
@@ -113,6 +115,7 @@ internal sealed class CachedWeather
 [JsonSerializable(typeof(GeocodingResponse))]
 [JsonSerializable(typeof(ForecastResponse))]
 [JsonSerializable(typeof(CachedWeather))]
+[JsonSerializable(typeof(CachedWeather[]))]
 internal partial class WeatherJsonContext : JsonSerializerContext
 {
 }

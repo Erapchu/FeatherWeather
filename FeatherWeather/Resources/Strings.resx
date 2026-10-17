@@ -51,7 +51,7 @@
   <data name="WindSpeedFormat" xml:space="preserve"><value>{0:0.#} m/s</value></data>
   <data name="PressureFormat" xml:space="preserve"><value>{0:0} mmHg</value></data>
   <data name="LocationFormat" xml:space="preserve"><value>{0}, {1}</value></data>
-  <data name="CachedUpdateFormat" xml:space="preserve"><value>Saved at {0:t} · updating in the background</value></data>
+  <data name="CachedUpdateFormat" xml:space="preserve"><value>Saved at {0:t}</value></data>
   <data name="UpdatedFormat" xml:space="preserve"><value>Updated at {0:t}</value></data>
   <data name="DataSource" xml:space="preserve"><value>Data: Open-Meteo</value></data>
   <data name="Today" xml:space="preserve"><value>Today</value></data>

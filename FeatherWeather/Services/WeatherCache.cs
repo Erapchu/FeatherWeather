@@ -6,12 +6,14 @@ namespace FeatherWeather.Services;
 
 internal sealed class WeatherCache
 {
-    public async Task<CachedWeather?> TryLoadAsync(CancellationToken cancellationToken = default)
+    private readonly SemaphoreSlim _writeLock = new(1, 1);
+
+    public async Task<CachedWeather[]> TryLoadAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             if (!File.Exists(AppDataPaths.WeatherCacheFilePath))
-                return null;
+                return [];
 
             await using var stream = new FileStream(
                 AppDataPaths.WeatherCacheFilePath,
@@ -24,9 +26,9 @@ internal sealed class WeatherCache
                 });
             return await JsonSerializer.DeserializeAsync(
                     stream,
-                    WeatherJsonContext.Default.CachedWeather,
+                    WeatherJsonContext.Default.CachedWeatherArray,
                     cancellationToken)
-                .ConfigureAwait(false);
+                .ConfigureAwait(false) ?? [];
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -34,12 +36,13 @@ internal sealed class WeatherCache
         }
         catch
         {
-            return null;
+            return [];
         }
     }
 
-    public async Task SaveAsync(CachedWeather weather, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(CachedWeather[] weather, CancellationToken cancellationToken = default)
     {
+        await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         string temporaryPath = AtomicFile.CreateTemporaryPath(AppDataPaths.WeatherCacheFilePath);
 
         try
@@ -58,7 +61,7 @@ internal sealed class WeatherCache
                 await JsonSerializer.SerializeAsync(
                         stream,
                         weather,
-                        WeatherJsonContext.Default.CachedWeather,
+                        WeatherJsonContext.Default.CachedWeatherArray,
                         cancellationToken)
                     .ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -77,6 +80,7 @@ internal sealed class WeatherCache
         finally
         {
             AtomicFile.TryDelete(temporaryPath);
+            _writeLock.Release();
         }
     }
 }

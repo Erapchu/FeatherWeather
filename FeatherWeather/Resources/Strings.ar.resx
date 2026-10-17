@@ -33,7 +33,7 @@
   <data name="FeelsLikeFormat"><value>المحسوسة {0:0}°</value></data>
   <data name="WindSpeedFormat"><value>{0:0.#} م/ث</value></data>
   <data name="PressureFormat"><value>{0:0} ملم زئبق</value></data>
-  <data name="CachedUpdateFormat"><value>حُفظ في {0:t} · جارٍ التحديث في الخلفية</value></data>
+  <data name="CachedUpdateFormat"><value>حُفظ في {0:t}</value></data>
   <data name="UpdatedFormat"><value>حُدث في {0:t}</value></data>
   <data name="DataSource"><value>البيانات: Open-Meteo</value></data>
   <data name="Today"><value>اليوم</value></data>
