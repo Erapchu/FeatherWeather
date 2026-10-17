@@ -206,14 +206,22 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand(AllowConcurrentExecutions = true)]
     private Task SelectSavedCityAsync(SavedCityItem city)
     {
+        City = string.Empty;
+        SelectPlace(city.Place, saveCity: false);
+        return Task.CompletedTask;
+    }
+
+    private void SelectPlace(GeoResult place, bool saveCity)
+    {
         _refreshCts?.Cancel();
         IsSettingsVisible = false;
-        City = string.Empty;
-        _currentPlace = city.Place;
-        _currentCity = city.Place.Name;
-        settingsService.SetCurrentPlace(city.Place, saveCity: false);
+        _currentPlace = place;
+        _currentCity = place.Name;
+        if (saveCity && !SavedCities.Any(city => SettingsService.IsSamePlace(city.Place, place)))
+            SavedCities.Add(new SavedCityItem(place));
+        settingsService.SetCurrentPlace(place, saveCity);
         UpdateSavedCitySelection();
-        var key = (city.Place.Latitude, city.Place.Longitude);
+        var key = (place.Latitude, place.Longitude);
         if (_forecasts.TryGetValue(key, out var snapshot))
             ShowForecast(snapshot);
         else
@@ -225,7 +233,6 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         if (_forecastErrors.TryGetValue(key, out var error))
             ShowForecastError(error);
-        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -272,7 +279,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _isApplyingSuggestion = false;
         CitySuggestions = [];
         IsCitySuggestionsOpen = false;
-        _ = RefreshCoreAsync(showLoadingText: true, saveCity: true);
+        SelectPlace(value, saveCity: true);
+        _ = RefreshCoreAsync(showLoadingText: true, placeOverride: value);
     }
 
     private void QueueCitySearch(string query)
