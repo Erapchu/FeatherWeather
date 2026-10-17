@@ -246,7 +246,15 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         if (!_preloadCompleted)
             _removedDuringPreload.Add(key);
         if (_currentPlace is not null && SettingsService.IsSamePlace(_currentPlace, city.Place))
-            _refreshCts?.Cancel();
+        {
+            if (SavedCities.Count > 0)
+            {
+                City = string.Empty;
+                SelectPlace(SavedCities[0].Place, saveCity: false);
+            }
+            else
+                _refreshCts?.Cancel();
+        }
     }
 
     private void UpdateSavedCitySelection()
