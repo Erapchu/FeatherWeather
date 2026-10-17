@@ -122,7 +122,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         // Discard entries for removed cities and the old format without coordinates.
         await SaveForecastsAsync();
-        if (_lastForecast is null && _refreshCts is null)
+        if (_refreshCts is null &&
+            (_lastForecast is null || DateTimeOffset.Now - _lastForecast.UpdatedAt > TimeSpan.FromHours(2)))
             await RefreshCoreAsync(showLoadingText: true, placeOverride: _currentPlace);
     }
 
