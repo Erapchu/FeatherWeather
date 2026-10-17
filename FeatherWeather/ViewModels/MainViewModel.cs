@@ -305,7 +305,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         try
         {
-            await Task.Delay(300, cancellationToken);
+            await Task.Delay(100, cancellationToken);
             IReadOnlyList<GeoResult> suggestions =
                 await weatherService.SearchCitiesAsync(query, 8, cancellationToken);
 
